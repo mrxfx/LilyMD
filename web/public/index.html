@@ -3,255 +3,457 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Lily MD — Pair your WhatsApp</title>
+<meta name="theme-color" content="#0b0713" />
+<title>Lily MD 🐱💗 — Your WhatsApp. Your Assistant.</title>
+<meta name="description" content="Lily MD — pair your WhatsApp, meet AYHA AI, and control your bot from a private owner dashboard." />
 <link rel="icon" href="/assets/logo.png" />
 <style>
   :root {
     color-scheme: dark;
-    --bg: #0b0d12;
-    --panel: #141822;
-    --panel-2: #1b2130;
-    --line: #262d3d;
-    --text: #e8ecf5;
-    --muted: #9aa4b8;
-    --accent: #a78bfa;
-    --accent-2: #34d399;
-    --danger: #f87171;
+    --bg: #08060f;
+    --bg-2: #0e0919;
+    --panel: rgba(24, 15, 40, .72);
+    --panel-solid: #150e24;
+    --line: rgba(168, 130, 255, .18);
+    --text: #f2ecff;
+    --muted: #a798c7;
+    --pink: #ff77c8;
+    --violet: #a06bff;
+    --lilac: #cbb2ff;
+    --green: #4ade80;
+    --danger: #ff7b8a;
+    --radius: 20px;
   }
   * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
   body {
     margin: 0;
     min-height: 100vh;
-    padding: 32px 18px 56px;
-    background: radial-gradient(1100px 620px at 12% -10%, #241a45 0%, transparent 60%),
-                radial-gradient(900px 520px at 92% 8%, #0f2f2a 0%, transparent 55%),
-                var(--bg);
+    background:
+      radial-gradient(1100px 700px at 8% -12%, rgba(160, 107, 255, .34), transparent 62%),
+      radial-gradient(900px 600px at 96% 4%, rgba(255, 119, 200, .22), transparent 58%),
+      radial-gradient(1000px 800px at 50% 120%, rgba(99, 55, 183, .22), transparent 60%),
+      var(--bg);
     color: var(--text);
-    font: 16px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font: 16px/1.65 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
   }
-  .wrap { max-width: 760px; margin: 0 auto; }
-  header { display: flex; align-items: center; gap: 14px; margin-bottom: 28px; }
-  header img { width: 52px; height: 52px; border-radius: 14px; border: 1px solid var(--line); object-fit: cover; }
-  header h1 { margin: 0; font-size: 22px; letter-spacing: .2px; }
-  header p { margin: 2px 0 0; color: var(--muted); font-size: 14px; }
+  a { color: var(--lilac); }
+  img { max-width: 100%; }
+  .wrap { width: min(1120px, 92vw); margin: 0 auto; }
+  .nav {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 22px 0;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text); }
+  .brand img { width: 46px; height: 46px; border-radius: 14px; border: 1px solid var(--line); object-fit: cover; box-shadow: 0 0 26px rgba(160,107,255,.4); }
+  .brand strong { font-size: 18px; letter-spacing: .3px; }
+  .brand span { display: block; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+  .nav-links { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .nav-links a.plain { color: var(--muted); text-decoration: none; font-size: 14px; padding: 8px 10px; border-radius: 10px; }
+  .nav-links a.plain:hover { color: var(--text); background: rgba(168,130,255,.1); }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    border: 0; border-radius: 14px; padding: 14px 24px;
+    font: 600 15px/1 ui-sans-serif, system-ui, sans-serif;
+    color: #16091f; cursor: pointer; text-decoration: none;
+    background: linear-gradient(135deg, var(--pink), var(--violet));
+    box-shadow: 0 12px 34px rgba(160,107,255,.32);
+    transition: transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+  }
+  .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 18px 44px rgba(255,119,200,.3); }
+  .btn:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+  .btn.ghost { background: rgba(255,255,255,.04); border: 1px solid var(--line); color: var(--text); box-shadow: none; }
+  .btn.small { padding: 10px 16px; font-size: 13px; border-radius: 11px; }
+
+  .hero { display: grid; grid-template-columns: 1.05fr .95fr; gap: 44px; align-items: center; padding: 26px 0 60px; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 8px; font-size: 12px; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--lilac); padding: 6px 14px; border-radius: 999px;
+    border: 1px solid var(--line); background: rgba(160,107,255,.1);
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 10px var(--green); animation: pulse 2.4s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+  h1 { font-size: clamp(34px, 4.6vw, 56px); line-height: 1.06; margin: 18px 0 16px; letter-spacing: -.02em; }
+  h1 em { font-style: normal; background: linear-gradient(120deg, var(--pink), var(--violet) 60%, var(--lilac)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .lede { color: var(--muted); font-size: 17px; max-width: 46ch; margin: 0 0 26px; }
+  .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+  .hero-stats { display: flex; gap: 26px; margin-top: 32px; flex-wrap: wrap; }
+  .hero-stats div strong { display: block; font-size: 20px; }
+  .hero-stats div span { font-size: 12px; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); }
+
   .card {
-    background: linear-gradient(180deg, var(--panel), var(--panel-2));
+    background: linear-gradient(180deg, rgba(38, 24, 62, .82), rgba(19, 12, 33, .9));
     border: 1px solid var(--line);
-    border-radius: 18px;
-    padding: 26px;
-    box-shadow: 0 18px 60px rgba(0,0,0,.35);
+    border-radius: var(--radius);
+    box-shadow: 0 26px 80px rgba(4, 2, 10, .6), inset 0 1px 0 rgba(255,255,255,.05);
+    backdrop-filter: blur(18px);
   }
-  h2 { margin: 0 0 6px; font-size: 18px; }
-  .sub { margin: 0 0 22px; color: var(--muted); font-size: 14px; }
-  label { display: block; font-size: 13px; text-transform: uppercase; letter-spacing: .09em; color: var(--muted); margin-bottom: 8px; }
+  .pair-card { padding: 28px; position: relative; overflow: hidden; }
+  .pair-card::before {
+    content: ""; position: absolute; inset: -40% -20% auto auto; width: 340px; height: 340px;
+    background: radial-gradient(circle, rgba(255,119,200,.28), transparent 65%); pointer-events: none;
+  }
+  .pair-card h2 { margin: 0 0 6px; font-size: 21px; }
+  .pair-card .sub { margin: 0 0 20px; color: var(--muted); font-size: 14px; }
+  label { display: block; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
   .row { display: flex; gap: 10px; flex-wrap: wrap; }
-  input[type="tel"], input[type="text"] {
-    flex: 1 1 240px;
-    padding: 13px 15px;
-    border-radius: 12px;
-    border: 1px solid var(--line);
-    background: #0c1017;
-    color: var(--text);
-    font-size: 16px;
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    outline: none;
+  input[type="tel"], input[type="text"], input[type="url"], input[type="password"], select {
+    width: 100%; padding: 13px 15px; border-radius: 13px;
+    border: 1px solid var(--line); background: rgba(8, 5, 15, .78); color: var(--text);
+    font-size: 15px; font-family: inherit; outline: none; transition: border-color .15s ease, box-shadow .15s ease;
   }
-  input:focus { border-color: var(--accent); }
-  button {
-    border: 0;
-    border-radius: 12px;
-    padding: 13px 22px;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    background: linear-gradient(135deg, var(--accent), #7c5cf5);
-    color: #0b0d12;
-    transition: transform .12s ease, opacity .12s ease;
-  }
-  button:hover:not(:disabled) { transform: translateY(-1px); }
-  button:disabled { opacity: .5; cursor: not-allowed; }
-  button.ghost { background: transparent; border: 1px solid var(--line); color: var(--text); font-weight: 500; padding: 11px 16px; }
-  .hint { margin-top: 12px; color: var(--muted); font-size: 13px; }
+  input:focus, select:focus { border-color: rgba(255,119,200,.55); box-shadow: 0 0 0 4px rgba(160,107,255,.16); }
+  .row input[type="tel"] { flex: 1 1 200px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .02em; }
+  .hint { margin: 12px 0 0; color: var(--muted); font-size: 13px; }
+  .msg { margin: 14px 0 0; font-size: 14px; padding: 12px 14px; border-radius: 12px; display: none; }
+  .msg.show { display: block; }
+  .msg.error { background: rgba(255, 90, 110, .12); border: 1px solid rgba(255, 90, 110, .35); color: #ffb9c1; }
+  .msg.info { background: rgba(160, 107, 255, .12); border: 1px solid var(--line); color: var(--lilac); }
   .step { display: none; }
-  .step.on { display: block; }
-  .code {
-    margin: 18px 0 6px;
-    text-align: center;
-    font: 700 40px/1.1 ui-monospace, SFMono-Regular, Menlo, monospace;
-    letter-spacing: .22em;
-    color: var(--accent-2);
-    padding: 18px 10px;
-    border: 1px dashed #2f5f4f;
-    border-radius: 14px;
-    background: rgba(52, 211, 153, .06);
-    word-break: break-all;
+  .step.on { display: block; animation: fadeUp .35s ease; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .code-box {
+    margin: 18px 0 8px; text-align: center; padding: 20px 12px; border-radius: 16px;
+    font: 700 34px/1.15 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .2em;
+    color: #fff; background: linear-gradient(135deg, rgba(255,119,200,.16), rgba(160,107,255,.18));
+    border: 1px dashed rgba(255,119,200,.45); word-break: break-all;
   }
-  .timer { text-align: center; color: var(--muted); font-size: 13px; margin-bottom: 18px; }
-  ol { padding-left: 20px; margin: 0 0 18px; color: var(--text); }
+  .timer { text-align: center; color: var(--muted); font-size: 13px; margin-bottom: 16px; }
+  ol { padding-left: 20px; margin: 0 0 16px; font-size: 14px; }
   ol li { margin-bottom: 6px; }
-  textarea {
-    width: 100%;
-    min-height: 120px;
-    resize: vertical;
-    padding: 12px;
-    border-radius: 12px;
-    border: 1px solid var(--line);
-    background: #0c1017;
-    color: var(--text);
-    font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
-    word-break: break-all;
-  }
-  .msg { margin-top: 14px; font-size: 14px; }
-  .msg.error { color: var(--danger); }
-  .spinner { display: inline-block; width: 14px; height: 14px; margin-right: 8px; vertical-align: -2px;
-    border: 2px solid var(--muted); border-top-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; }
+  textarea { width: 100%; min-height: 108px; resize: vertical; padding: 12px; border-radius: 12px; border: 1px solid var(--line); background: rgba(8,5,15,.78); color: var(--text); font: 12px/1.5 ui-monospace, monospace; word-break: break-all; }
+  .spinner { display: inline-block; width: 14px; height: 14px; margin-right: 8px; vertical-align: -2px; border: 2px solid var(--lilac); border-top-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .note { margin: 22px 0 0; padding-top: 18px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
-  code.inline { background: #0c1017; border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; font-size: 12px; }
+  .state-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px; color: var(--muted); margin-top: 16px; }
+  .state-chip { padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255,255,255,.03); font-size: 12px; letter-spacing: .04em; }
+  .state-chip.active { color: #1b0a22; background: linear-gradient(135deg, var(--pink), var(--violet)); border-color: transparent; font-weight: 700; }
+
+  details.backend { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 14px; font-size: 13px; color: var(--muted); }
+  details.backend summary { cursor: pointer; color: var(--lilac); }
+  details.backend .row { margin-top: 10px; }
+
+  section.block { padding: 58px 0; }
+  .section-head { text-align: center; max-width: 720px; margin: 0 auto 38px; }
+  .section-head h2 { font-size: clamp(24px, 3vw, 34px); margin: 10px 0 10px; }
+  .section-head p { color: var(--muted); margin: 0; }
+  .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .feature { padding: 22px; }
+  .feature .ico { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 12px; margin-bottom: 14px; background: linear-gradient(135deg, rgba(255,119,200,.22), rgba(160,107,255,.22)); font-size: 19px; }
+  .feature h3 { margin: 0 0 6px; font-size: 16px; }
+  .feature p { margin: 0; color: var(--muted); font-size: 14px; }
+
+  .ai-band { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; align-items: center; padding: 34px; }
+  .ai-band h2 { margin: 8px 0 12px; font-size: 28px; }
+  .ai-band p { color: var(--muted); }
+  .chat { display: grid; gap: 10px; }
+  .bubble { max-width: 88%; padding: 11px 15px; border-radius: 16px; font-size: 14px; }
+  .bubble.them { background: rgba(255,255,255,.05); border: 1px solid var(--line); border-bottom-left-radius: 5px; }
+  .bubble.bot { margin-left: auto; background: linear-gradient(135deg, rgba(255,119,200,.24), rgba(160,107,255,.26)); border: 1px solid rgba(255,119,200,.24); border-bottom-right-radius: 5px; }
+
+  footer { border-top: 1px solid var(--line); padding: 34px 0 46px; margin-top: 24px; color: var(--muted); font-size: 13px; }
+  .foot { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; align-items: center; }
+  .foot strong { color: var(--text); }
+  .muted { color: var(--muted); }
+  .foot-links { display: flex; gap: 16px; flex-wrap: wrap; }
+
+  @media (max-width: 900px) {
+    .hero { grid-template-columns: 1fr; gap: 28px; padding-bottom: 40px; }
+    .ai-band { grid-template-columns: 1fr; }
+    .nav { flex-wrap: wrap; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+    html { scroll-behavior: auto; }
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header>
-    <img src="/assets/logo.png" alt="Lily MD" onerror="this.style.visibility='hidden'" />
+  <nav class="nav">
+    <a class="brand" href="/">
+      <img src="/assets/logo.png" alt="Lily MD logo" onerror="this.style.visibility='hidden'" />
+      <div><strong>Lily MD</strong><span>Powered by AYHA AI</span></div>
+    </a>
+    <div class="nav-links">
+      <a class="plain" href="#features">Features</a>
+      <a class="plain" href="#ayha">AYHA</a>
+      <a class="plain" href="#security">Security</a>
+      <a class="plain" href="/login">Owner login</a>
+      <a class="btn small" href="#pair">Connect WhatsApp</a>
+    </div>
+  </nav>
+
+  <header class="hero" id="pair">
     <div>
-      <h1>Lily MD</h1>
-      <p>Pair your WhatsApp and take the session with you</p>
+      <span class="pill"><span class="dot"></span> WhatsApp linked-device platform</span>
+      <h1>Your WhatsApp.<br />Your assistant.<br /><em>Your intelligence.</em></h1>
+      <p class="lede">
+        Lily MD pairs your number in seconds, answers your private chats in your own voice with AYHA,
+        and gives you a private dashboard for every switch — no code, no terminal.
+      </p>
+      <div class="hero-actions">
+        <a class="btn" href="#pair">Pair a number</a>
+        <a class="btn ghost" href="/login">Open dashboard</a>
+      </div>
+      <div class="hero-stats">
+        <div><strong>150+</strong><span>Commands</span></div>
+        <div><strong>5</strong><span>Languages</span></div>
+        <div><strong>24/7</strong><span>Auto-reply</span></div>
+      </div>
+    </div>
+
+    <div class="card pair-card">
+      <!-- step 1 -->
+      <section class="step on" id="step-start">
+        <h2>Link a device</h2>
+        <p class="sub">Enter the number that will run Lily MD. You will get an 8-character code to type into WhatsApp.</p>
+        <label for="number">WhatsApp number (with country code)</label>
+        <div class="row">
+          <input id="number" type="tel" inputmode="numeric" autocomplete="tel" placeholder="916033352400" />
+          <button class="btn" id="start">Get pairing code</button>
+        </div>
+        <p class="hint">Digits only, no <code>+</code> or spaces — for example <code>916033352400</code>.</p>
+        <p class="msg error" id="start-error"></p>
+        <details class="backend">
+          <summary>Server settings (only for a separately hosted website)</summary>
+          <p class="hint">This page is served by your bot when you open its address. If you deployed the site to Vercel, enter the public URL of the running Lily MD bot so pairing and login can reach the API.</p>
+          <div class="row">
+            <input id="backend-url" type="url" placeholder="https://your-bot-host.example.com" />
+            <button class="btn ghost small" id="save-backend">Save</button>
+          </div>
+          <p class="hint" id="backend-status"></p>
+        </details>
+      </section>
+
+      <!-- step 2 -->
+      <section class="step" id="step-code">
+        <h2>Enter this code in WhatsApp</h2>
+        <p class="sub">On the phone that owns this number:</p>
+        <div class="code-box" id="code">••••-••••</div>
+        <div class="timer" id="timer">Waiting for you to confirm…</div>
+        <ol>
+          <li>Open WhatsApp</li>
+          <li>Settings → Linked devices</li>
+          <li>Tap <strong>Link a device</strong></li>
+          <li>Choose <strong>Link with phone number instead</strong> and type the code</li>
+        </ol>
+        <div class="state-row">
+          <span>State:</span>
+          <span class="state-chip" id="chip-init">initializing</span>
+          <span class="state-chip" id="chip-code">code ready</span>
+          <span class="state-chip" id="chip-connect">connecting</span>
+          <span class="state-chip" id="chip-done">connected</span>
+        </div>
+        <p class="msg info" id="code-msg"></p>
+        <p class="msg error" id="code-error"></p>
+      </section>
+
+      <!-- step 3 -->
+      <section class="step" id="step-done">
+        <h2>Linked 🎉</h2>
+        <p class="sub" id="done-sub">Your session is ready. Keep it private — it is full access to that WhatsApp account.</p>
+        <p class="msg info show" id="owner-msg"></p>
+        <label for="session">SESSION_ID</label>
+        <textarea id="session" readonly></textarea>
+        <div class="row" style="margin-top:12px">
+          <button class="btn" id="copy">Copy SESSION_ID</button>
+          <button class="btn ghost" id="download">Download .txt</button>
+          <a class="btn ghost" href="/login" id="go-dashboard">Owner dashboard</a>
+          <button class="btn ghost" id="again">Pair another</button>
+        </div>
+        <p class="msg info" id="copy-msg"></p>
+      </section>
+
+      <p class="hint" style="border-top:1px solid var(--line);padding-top:14px;margin-top:18px">
+        Lily MD is unofficial software built on Baileys and is not affiliated with WhatsApp.
+        Sessions are generated on your own server, shown once, and dropped from memory after 15 minutes.
+      </p>
     </div>
   </header>
-
-  <div class="card">
-    <section class="step on" id="step-start">
-      <h2>Link a device</h2>
-      <p class="sub">Enter the number you want to run Lily MD on. You'll get an 8-character code to type into WhatsApp.</p>
-      <label for="number">WhatsApp number (with country code)</label>
-      <div class="row">
-        <input id="number" type="tel" inputmode="numeric" autocomplete="tel" placeholder="916033352400" />
-        <button id="start">Get pairing code</button>
-      </div>
-      <p class="hint">Digits only, no <code class="inline">+</code> or spaces — for example <code class="inline">916033352400</code>.</p>
-      <p class="msg error" id="start-error" hidden></p>
-    </section>
-
-    <section class="step" id="step-code">
-      <h2>Enter this code in WhatsApp</h2>
-      <p class="sub">On the phone that owns that number:</p>
-      <div class="code" id="code">••••-••••</div>
-      <div class="timer" id="timer">Waiting for you to confirm…</div>
-      <ol>
-        <li>Open WhatsApp</li>
-        <li>Settings → Linked devices</li>
-        <li>Tap <strong>Link a device</strong></li>
-        <li>Choose <strong>Link with phone number instead</strong> and type the code</li>
-      </ol>
-      <p class="msg" id="code-msg">Waiting for your confirmation<span class="spinner"></span></p>
-      <p class="msg error" id="code-error" hidden></p>
-    </section>
-
-    <section class="step" id="step-done">
-      <h2>Linked — here is your SESSION_ID</h2>
-      <p class="sub">Paste this into the <code class="inline">SESSION_ID</code> variable of your host so the bot boots straight into this session. Keep it private: it is full access to this WhatsApp account.</p>
-      <textarea id="session" readonly></textarea>
-      <div class="row" style="margin-top:12px">
-        <button id="copy">Copy SESSION_ID</button>
-        <button class="ghost" id="download">Download .txt</button>
-        <button class="ghost" id="again">Pair another number</button>
-      </div>
-      <p class="msg" id="copy-msg"></p>
-    </section>
-
-    <p class="note">Lily MD is unofficial software built on Baileys and is not affiliated with WhatsApp. Sessions are generated on this server, handed to you once, and dropped from memory after 15 minutes.</p>
-  </div>
 </div>
 
+<section class="block" id="features">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="pill">Everything in one place</span>
+      <h2>Built for owners who want control</h2>
+      <p>Every switch in the dashboard reads and writes the real bot state — no mock panels.</p>
+    </div>
+    <div class="grid">
+      <article class="card feature"><div class="ico">💬</div><h3>AYHA auto-reply</h3><p>Private, group or all chats — with an allowlist, a blocklist and a cooldown so it never floods.</p></article>
+      <article class="card feature"><div class="ico">🧠</div><h3>Learned talking style</h3><p>AYHA copies your Hinglish, slang and emoji habits from your own messages, never from groups.</p></article>
+      <article class="card feature"><div class="ico">🛡️</div><h3>Protection suite</h3><p>Anti-call, anti-delete, anti-bot, PM blocker and moderation toggles, all persistent.</p></article>
+      <article class="card feature"><div class="ico">⚡</div><h3>Downloads &amp; media</h3><p>Song, video, Instagram, TikTok, Spotify and 13 more platforms from a single prefix.</p></article>
+      <article class="card feature"><div class="ico">🔐</div><h3>Owner-only access</h3><p>Hashed passwords, HttpOnly sessions, CSRF checks, lockouts and an audit log.</p></article>
+      <article class="card feature"><div class="ico">📊</div><h3>Live status</h3><p>Server-Sent Events stream connection, uptime, AI usage and memory straight from the process.</p></article>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="ayha">
+  <div class="wrap">
+    <div class="card ai-band">
+      <div>
+        <span class="pill">AYHA AI</span>
+        <h2>She texts like you, not like a bot</h2>
+        <p>AYHA reads the messages you send from your own phone and mirrors the tone, the language mix and the emoji habit. Add a style note any time with <code>.aistyle</code> or from the dashboard, and test her live before a single message goes out.</p>
+        <p class="muted" style="font-size:14px">English · हिन्दी · Hinglish · বাংলা · Benlish — with Companion, Professional and Venom personalities.</p>
+        <a class="btn" href="/login">Configure AYHA</a>
+      </div>
+      <div class="chat" aria-hidden="true">
+        <div class="bubble them">bro tu free hai?</div>
+        <div class="bubble bot">haan bol 😌 kya scene hai</div>
+        <div class="bubble them">kal ka plan?</div>
+        <div class="bubble bot">kal shaam free hu, tu bata 🙄</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="security">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="pill">Security first</span>
+      <h2>Your session never leaves your server</h2>
+      <p>WhatsApp credentials stay on the machine that runs the bot. The website only ever sees a session you choose to copy.</p>
+    </div>
+    <div class="grid">
+      <article class="card feature"><div class="ico">🧂</div><h3>scrypt hashing</h3><p>Owner passwords are stored as salted scrypt hashes and compared in constant time.</p></article>
+      <article class="card feature"><div class="ico">🍪</div><h3>HttpOnly cookies</h3><p>Session tokens live in HttpOnly, SameSite cookies; only their SHA-256 hash is stored server-side.</p></article>
+      <article class="card feature"><div class="ico">🧾</div><h3>Audit trail</h3><p>Logins, lockouts, password resets and configuration changes are all recorded.</p></article>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot">
+    <div>
+      <strong>Lily MD 🐱💗</strong> — your WhatsApp, your assistant, your intelligence.<br />
+      Powered by AYHA AI · Developed &amp; customised by <strong>Rahul Haldar</strong>
+    </div>
+    <div class="foot-links">
+      <a href="/login">Owner login</a>
+      <a href="/dashboard">Dashboard</a>
+      <a href="https://github.com/mrxfx/LilyMD" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </div>
+</footer>
+
+<script src="/config.js"></script>
+<script src="/app.js"></script>
 <script>
 (function () {
   var $ = function (id) { return document.getElementById(id); };
   var steps = ['step-start', 'step-code', 'step-done'];
-  var poll = null;
+  var pollTimer = null;
+  var tickTimer = null;
   var deadline = 0;
   var lastSession = '';
+  var busy = false;
 
   function show(step) {
     steps.forEach(function (id) { $(id).classList.toggle('on', id === step); });
   }
-
-  function stopPolling() {
-    if (poll) { clearInterval(poll); poll = null; }
+  function setMsg(el, text, kind) {
+    el.textContent = text || '';
+    el.className = 'msg ' + (kind || 'error') + (text ? ' show' : '');
   }
-
+  function setChips(state) {
+    var map = { initializing: 'chip-init', waiting: 'chip-init', requesting: 'chip-init', code: 'chip-code', connecting: 'chip-connect', connected: 'chip-done' };
+    ['chip-init', 'chip-code', 'chip-connect', 'chip-done'].forEach(function (id) { $(id).classList.toggle('active', map[state] === id); });
+  }
+  function stopPolling() {
+    if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }
+    if (tickTimer) { clearInterval(tickTimer); tickTimer = null; }
+  }
   function tick() {
     var left = Math.max(0, Math.round((deadline - Date.now()) / 1000));
     $('timer').textContent = left > 0
       ? 'Code expires in ' + Math.floor(left / 60) + ':' + String(left % 60).padStart(2, '0')
-      : 'Code expired';
+      : 'Code may have expired — you can start again.';
   }
 
   async function start() {
+    if (busy) return;
     var number = $('number').value.replace(/[^0-9]/g, '');
-    var err = $('start-error');
-    err.hidden = true;
+    setMsg($('start-error'), '');
     if (number.length < 7) {
-      err.textContent = 'Enter your full number with the country code.';
-      err.hidden = false;
+      setMsg($('start-error'), 'Enter your full number with the country code.');
       return;
     }
+    busy = true;
     $('start').disabled = true;
     $('start').textContent = 'Contacting WhatsApp…';
     try {
-      var res = await fetch('/api/pair', {
+      var data = await LilyAPI.api('/api/pair', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ number: number })
+        body: JSON.stringify({ number: number }),
+        timeoutMs: 25000
       });
-      var data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Could not start pairing.');
       show('step-code');
       $('code').textContent = '••••-••••';
-      $('code-msg').innerHTML = 'Requesting code<span class="spinner"></span>';
-      $('code-error').hidden = true;
+      setChips('initializing');
+      setMsg($('code-msg'), 'Starting a secure session…', 'info');
+      setMsg($('code-error'), '');
       deadline = Date.now() + 180000;
       tick();
-      poll = setInterval(function () { check(data.id); }, 2000);
-      check(data.id);
-    } catch (e) {
-      err.textContent = e.message;
-      err.hidden = false;
+      tickTimer = setInterval(tick, 1000);
+      waitForCode(data.id, 0);
+    } catch (err) {
+      show('step-start');
+      setMsg($('start-error'), err.message);
     } finally {
+      busy = false;
       $('start').disabled = false;
       $('start').textContent = 'Get pairing code';
     }
   }
 
-  async function check(id) {
+  async function waitForCode(id, attempt) {
+    if (!id) {
+      setMsg($('code-error'), 'The server did not return a session id. Start again.');
+      return;
+    }
     try {
-      var res = await fetch('/api/status?id=' + encodeURIComponent(id));
-      if (!res.ok) {
-        var miss = await res.json();
-        stopPolling();
-        $('code-msg').hidden = true;
-        $('code-error').textContent = miss.error || 'This session expired. Please start again.';
-        $('code-error').hidden = false;
-        return;
-      }
-      var data = await res.json();
-      if (data.status === 'code') {
+      var data = await LilyAPI.api('/api/status?id=' + encodeURIComponent(id), { timeoutMs: 15000 });
+      setChips(data.state);
+      if (data.code) {
         $('code').textContent = data.code;
-        $('code-msg').innerHTML = 'Waiting for your confirmation<span class="spinner"></span>';
+        setMsg($('code-msg'), 'Waiting for you to confirm in WhatsApp…', 'info');
       }
-      if (data.status === 'connected' && data.sessionId) {
+      if (data.state === 'connecting') setMsg($('code-msg'), 'Code accepted — finishing the handshake…', 'info');
+      if (data.state === 'connected' && data.sessionId) {
         stopPolling();
         lastSession = data.sessionId;
         $('session').value = data.sessionId;
+        setMsg($('owner-msg'), data.ownerAccount
+          ? (data.passwordSent
+              ? 'An owner dashboard account was created and the temporary password was sent to you on WhatsApp.'
+              : 'An owner dashboard account was created, but the password message could not be delivered — use “Reset owner password” from another owner account.')
+          : 'This number is not a configured owner, so no dashboard account was created. Use the owner number to manage Lily MD.', data.ownerAccount ? 'info' : 'info');
         show('step-done');
+        return;
       }
-      if (data.status === 'error') {
+      if (data.state === 'failed') {
         stopPolling();
-        $('code-msg').hidden = true;
-        $('code-error').textContent = data.error || 'Pairing failed. Please try again.';
-        $('code-error').hidden = false;
+        setMsg($('code-msg'), '');
+        setMsg($('code-error'), data.error || 'Pairing failed. Please try again.');
+        return;
       }
-    } catch (e) { /* transient network hiccup — keep polling */ }
+    } catch (err) {
+      if (err.status === 404) {
+        stopPolling();
+        setMsg($('code-error'), err.message);
+        return;
+      }
+      if (attempt > 6) {
+        setMsg($('code-error'), err.message);
+      }
+    }
+    pollTimer = setTimeout(function () { waitForCode(id, attempt + 1); }, 2000);
   }
 
   $('start').addEventListener('click', start);
@@ -260,10 +462,10 @@
   $('copy').addEventListener('click', async function () {
     try {
       await navigator.clipboard.writeText(lastSession);
-      $('copy-msg').textContent = 'Copied — paste it into SESSION_ID on your host.';
-    } catch (e) {
+      setMsg($('copy-msg'), 'Copied — paste it into SESSION_ID on your host.', 'info');
+    } catch (err) {
       $('session').select();
-      $('copy-msg').textContent = 'Press Ctrl/Cmd + C to copy the selection.';
+      setMsg($('copy-msg'), 'Press Ctrl/Cmd + C to copy the selection.', 'info');
     }
   });
 
@@ -280,12 +482,27 @@
     stopPolling();
     lastSession = '';
     $('session').value = '';
-    $('copy-msg').textContent = '';
+    setMsg($('copy-msg'), '');
     $('number').value = '';
     show('step-start');
   });
 
-  setInterval(tick, 1000);
+  // Backend URL (for a frontend hosted elsewhere, e.g. Vercel)
+  $('backend-url').value = LilyAPI.backend();
+  $('backend-status').textContent = LilyAPI.backend()
+    ? 'Current backend: ' + LilyAPI.backend()
+    : 'Currently using this page’s own origin (' + location.origin + ').';
+  $('save-backend').addEventListener('click', async function () {
+    var url = LilyAPI.setBackend($('backend-url').value);
+    $('backend-status').textContent = url ? 'Saved: ' + url : 'Using ' + location.origin;
+    try {
+      var info = await LilyAPI.api('/api/info', { timeoutMs: 8000 });
+      setMsg($('start-error'), '');
+      $('backend-status').textContent = 'Connected to ' + info.bot + ' — ' + (url || location.origin);
+    } catch (err) {
+      setMsg($('start-error'), err.message);
+    }
+  });
 })();
 </script>
 </body>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#0b0713" />
+<title>Owner dashboard — Lily MD</title>
+<link rel="icon" href="/assets/logo.png" />
+<link rel="stylesheet" href="/dashboard.css" />
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <img src="/assets/logo.png" alt="Lily MD" onerror="this.style.visibility='hidden'" />
+      <div><strong>Lily MD 🐱💗</strong><span>Owner dashboard</span></div>
+    </div>
+    <nav id="nav" aria-label="Dashboard sections"></nav>
+    <div class="sidebar-foot">
+      <a href="/" target="_blank" rel="noopener">Pairing page ↗</a>
+      <a href="#" id="logout">Sign out</a>
+      <div id="who" class="muted" style="margin-top:8px"></div>
+    </div>
+  </aside>
+  <div class="backdrop" id="backdrop"></div>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="row">
+        <button class="btn ghost small menu-toggle" id="menu-toggle" aria-label="Open menu">☰</button>
+        <div>
+          <div class="crumb" id="crumb">Dashboard</div>
+          <h1 id="title">Overview</h1>
+        </div>
+      </div>
+      <div class="top-actions">
+        <span class="status-pill" id="status-pill"><span class="dot"></span><span id="status-text">checking…</span></span>
+        <button class="btn ghost small" id="refresh">Refresh</button>
+      </div>
+    </div>
+    <main class="content" id="view" aria-live="polite">
+      <div class="grid cols-4">
+        <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
+      </div>
+    </main>
+  </div>
+</div>
+<div class="toast-wrap" id="toasts" aria-live="polite"></div>
+
+<script src="/config.js"></script>
+<script src="/app.js"></script>
+<script src="/dashboard.js"></script>
+</body>
+</html>

@@ -7,7 +7,12 @@ const settings = require('../settings');
 
 async function githubCommand(sock, chatId, message) {
   try {
-    const repo = String(settings.githubRepo || process.env.GITHUB_REPO || '').trim();
+    // Accept either "owner/repo" or a full https://github.com/owner/repo URL.
+    const repo = String(settings.githubRepo || process.env.GITHUB_REPO || '')
+      .trim()
+      .replace(/^https?:\/\/(?:www\.)?github\.com\//i, '')
+      .replace(/[?#].*$/, '')
+      .replace(/\/+$/, '')
     if (!repo) {
       return await sock.sendMessage(chatId, {
         text: '⚙️ No repository configured.\nAdd `GITHUB_REPO=owner/repo` to your .env to use .github',

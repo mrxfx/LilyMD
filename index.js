@@ -84,6 +84,7 @@ const useMobile = process.argv.includes("--mobile")
 
 // Connection state + reconnect backoff
 let isConnected = false
+let currentSock = null
 let reconnectAttempts = 0
 let reconnectTimer = null
 
@@ -279,6 +280,7 @@ async function startXeonBotInc() {
         }
         
         if (connection == "open") {
+            currentSock = XeonBotInc
             console.log(chalk.magenta(` `))
             console.log(chalk.yellow(`🌿Connected to => ` + JSON.stringify(XeonBotInc.user, null, 2)))
 
@@ -416,6 +418,39 @@ async function startXeonBotInc() {
 
 // Health endpoint for panels / uptime monitors (PORT defaults to 8080)
 startHealthServer(() => isConnected)
+
+// Dashboard runtime hooks: the web layer only reports state and asks for actions
+// through these; it never touches session credentials.
+const webApi = require('./lib/webApi')
+webApi.setRuntime({
+    getConnected: () => isConnected,
+    getSocket: () => currentSock,
+    disconnect: async () => {
+        isConnected = false
+        try { await currentSock?.logout() } catch (err) { console.error('[web] logout failed:', err.message) }
+        try { rmSync('./session', { recursive: true, force: true }) } catch (err) { }
+        currentSock = null
+    },
+    reconnect: async () => {
+        try { currentSock?.end(undefined) } catch (err) { }
+        currentSock = null
+        reconnectAttempts = 0
+        if (reconnectTimer) {
+            clearTimeout(reconnectTimer)
+            reconnectTimer = null
+        }
+        scheduleReconnect(startXeonBotInc)
+    },
+    listGroups: async () => {
+        if (!currentSock) throw new Error('Bot is not connected')
+        const all = await currentSock.groupFetchAllParticipating()
+        return Object.values(all).map((group) => ({
+            id: group.id,
+            subject: group.subject,
+            size: group.participants?.length || 0
+        }))
+    }
+})
 
 // Start the bot with error handling
 startXeonBotInc().catch(error => {

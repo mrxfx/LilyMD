@@ -85,6 +85,8 @@ async function helpCommand(sock, chatId, message) {
 ║ ➤ .autotyping <on/off>
 ║ ➤ .autoread <on/off>
 ║ ➤ .aiutoreply <on/off>
+║ ➤ .aisetkey <sk-or-...>
+║ ➤ .aisetmodel <model>
 ║ ➤ .aistyle <description>
 ║ ➤ .aimemory
 ║ ➤ .anticall <on/off>

@@ -13,7 +13,8 @@
     "install:panel": "npm install --legacy-peer-deps",
     "install:force": "npm install --force",
     "website": "node web/server.js",
-    "test": "node scripts/check-syntax.js"
+    "test": "node scripts/check-syntax.js",
+    "test:web": "node scripts/test-web.js"
   },
   "keywords": [
     "whatsapp-bot",

@@ -6,6 +6,10 @@ package-lock.json
 data/aiMemory.json
 data/aiAutoReply.json
 data/aiUsage.json
+data/webAccounts.json
+data/webSessions.json
+data/webAudit.log
+data/disabledCommands.json
 tmp/
 temp/
 

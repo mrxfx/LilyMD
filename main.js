@@ -163,6 +163,20 @@ global.ytch = "";
 
 // Channel forwarding context comes from lib/messageConfig (empty unless NEWSLETTER_JID is set)
 
+// Dashboard command switches (data/disabledCommands.json), cached for 5s.
+let disabledCache = { at: 0, names: new Set() };
+function isCommandDisabled(name) {
+    try {
+        if (Date.now() - disabledCache.at > 5000) {
+            const list = JSON.parse(fs.readFileSync('./data/disabledCommands.json', 'utf8'));
+            disabledCache = { at: Date.now(), names: new Set(Array.isArray(list) ? list : []) };
+        }
+        return disabledCache.names.has(String(name).toLowerCase());
+    } catch (err) {
+        return false;
+    }
+}
+
 async function handleMessages(sock, messageUpdate, printLog) {
     try {
         const { messages, type } = messageUpdate;
@@ -323,6 +337,8 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 // Only run chatbot in public mode or for owner/sudo
                 if (isPublic || isOwnerOrSudoCheck) {
                     await handleChatbotResponse(sock, chatId, message, userMessage, senderId);
+                    // AYHA auto-reply can also cover groups when its mode allows it
+                    await handleAiAutoReply(sock, chatId, message, rawText, senderId);
                 }
             } else if (isPublic || isOwnerOrSudoCheck) {
                 // Private chats only: AYHA auto-reply (groups are ignored)
@@ -335,12 +351,20 @@ async function handleMessages(sock, messageUpdate, printLog) {
             return;
         }
 
+        // Commands disabled from the dashboard (data/disabledCommands.json)
+        {
+            const commandName = (userMessage.match(/^\.([a-z0-9_-]+)/i) || [])[1];
+            if (commandName && isCommandDisabled(commandName)) {
+                return;
+            }
+        }
+
         // List of admin commands
         const adminCommands = ['.mute', '.unmute', '.ban', '.unban', '.promote', '.demote', '.kick', '.tagall', '.tagnotadmin', '.hidetag', '.antilink', '.antitag', '.antibot', '.nobot', '.setgdesc', '.setgname', '.setgpp', '.groupstatus', '.togstatus', '.swgc', '.gstatus', '.gs'];
         const isAdminCommand = adminCommands.some(cmd => userMessage.startsWith(cmd));
 
         // List of owner commands
-        const ownerCommands = ['.mode', '.autostatus', '.savestatus', '.savesm', '.savest', '.antidelete', '.cleartmp', '.setpp', '.clearsession', '.areact', '.autoreact', '.autotyping', '.autoread', '.pmblocker', '.aiutoreply', '.aireply', '.aistyle', '.aimemory'];
+        const ownerCommands = ['.mode', '.autostatus', '.savestatus', '.savesm', '.savest', '.antidelete', '.cleartmp', '.setpp', '.clearsession', '.areact', '.autoreact', '.autotyping', '.autoread', '.pmblocker', '.aiutoreply', '.aireply', '.aistyle', '.aimemory', '.aisetkey', '.aikey', '.aisetmodel', '.aimodel'];
         const isOwnerCommand = ownerCommands.some(cmd => userMessage.startsWith(cmd));
 
         let isSenderAdmin = false;
@@ -787,7 +811,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 const match = userMessage.slice(8).trim();
                 await handleChatbotCommand(sock, chatId, message, match);
                 break;
-            case userMessage.startsWith('.aiutoreply') || userMessage.startsWith('.aireply') || userMessage.startsWith('.aistyle') || userMessage.startsWith('.aimemory'):
+            case userMessage.startsWith('.aiutoreply') || userMessage.startsWith('.aireply') || userMessage.startsWith('.aistyle') || userMessage.startsWith('.aimemory') || userMessage.startsWith('.aisetkey') || userMessage.startsWith('.aikey') || userMessage.startsWith('.aisetmodel') || userMessage.startsWith('.aimodel'):
                 await handleAiAutoReplyCommand(sock, chatId, message, rawText);
                 break;
             case userMessage.startsWith('.take') || userMessage.startsWith('.steal'):

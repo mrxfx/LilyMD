@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#0b0713" />
+<title>Owner login — Lily MD</title>
+<link rel="icon" href="/assets/logo.png" />
+<style>
+  :root {
+    color-scheme: dark;
+    --line: rgba(168,130,255,.18);
+    --text: #f2ecff; --muted: #a798c7; --pink: #ff77c8; --violet: #a06bff; --lilac: #cbb2ff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px;
+    background:
+      radial-gradient(900px 600px at 10% -10%, rgba(160,107,255,.32), transparent 60%),
+      radial-gradient(800px 520px at 95% 5%, rgba(255,119,200,.2), transparent 60%),
+      #08060f;
+    color: var(--text); font: 16px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  .card {
+    width: min(420px, 100%); padding: 30px;
+    background: linear-gradient(180deg, rgba(38,24,62,.85), rgba(19,12,33,.92));
+    border: 1px solid var(--line); border-radius: 22px;
+    box-shadow: 0 30px 90px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.05);
+    backdrop-filter: blur(16px);
+  }
+  .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 22px; }
+  .brand img { width: 48px; height: 48px; border-radius: 14px; border: 1px solid var(--line); object-fit: cover; }
+  .brand strong { display: block; font-size: 17px; }
+  .brand span { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+  h1 { font-size: 22px; margin: 0 0 6px; }
+  p.sub { color: var(--muted); font-size: 14px; margin: 0 0 22px; }
+  label { display: block; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 14px 0 8px; }
+  input {
+    width: 100%; padding: 13px 15px; border-radius: 13px; border: 1px solid var(--line);
+    background: rgba(8,5,15,.78); color: var(--text); font-size: 15px; font-family: inherit; outline: none;
+  }
+  input:focus { border-color: rgba(255,119,200,.55); box-shadow: 0 0 0 4px rgba(160,107,255,.16); }
+  button {
+    width: 100%; margin-top: 20px; padding: 14px; border: 0; border-radius: 13px; cursor: pointer;
+    font: 700 15px/1 ui-sans-serif, system-ui, sans-serif; color: #16091f;
+    background: linear-gradient(135deg, var(--pink), var(--violet));
+    box-shadow: 0 12px 34px rgba(160,107,255,.3);
+  }
+  button:disabled { opacity: .55; cursor: not-allowed; }
+  .msg { margin-top: 14px; padding: 11px 13px; border-radius: 11px; font-size: 13.5px; display: none; }
+  .msg.show { display: block; }
+  .msg.error { background: rgba(255,90,110,.12); border: 1px solid rgba(255,90,110,.35); color: #ffb9c1; }
+  .msg.ok { background: rgba(74,222,128,.1); border: 1px solid rgba(74,222,128,.3); color: #b6f5c9; }
+  .foot { margin-top: 20px; font-size: 12.5px; color: var(--muted); text-align: center; }
+  .foot a { color: var(--lilac); text-decoration: none; }
+  details { margin-top: 16px; font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 12px; }
+  summary { cursor: pointer; color: var(--lilac); }
+  details .row { display: flex; gap: 8px; margin-top: 8px; }
+  details input { flex: 1; }
+  details button { width: auto; margin: 0; padding: 11px 14px; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="brand">
+    <img src="/assets/logo.png" alt="Lily MD" onerror="this.style.visibility='hidden'" />
+    <div><strong>Lily MD 🐱💗</strong><span>Owner dashboard</span></div>
+  </div>
+  <h1>Sign in</h1>
+  <p class="sub">Use the WhatsApp number that owns the bot and the password sent to you there.</p>
+
+  <form id="form" autocomplete="on">
+    <label for="number">WhatsApp number</label>
+    <input id="number" type="tel" inputmode="numeric" autocomplete="username" placeholder="916033352400" required />
+    <label for="password">Password</label>
+    <input id="password" type="password" autocomplete="current-password" placeholder="••••••••••" required />
+    <button id="submit" type="submit">Sign in</button>
+  </form>
+  <p class="msg error" id="error"></p>
+  <p class="msg ok" id="notice"></p>
+
+  <details>
+    <summary>Backend settings</summary>
+    <p>The dashboard talks to the Lily MD bot. If this site is on Vercel, point it at your bot’s public URL.</p>
+    <div class="row">
+      <input id="backend-url" type="url" placeholder="https://your-bot-host.example.com" />
+      <button class="btn" id="save-backend" type="button">Save</button>
+    </div>
+    <p id="backend-status"></p>
+  </details>
+
+  <p class="foot">No account yet? Pair your owner number on the <a href="/">pairing page</a> — the temporary password is sent to that WhatsApp.</p>
+</div>
+
+<script src="/config.js"></script>
+<script src="/app.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var form = $('form');
+  var submit = $('submit');
+
+  function show(el, text) {
+    el.textContent = text || '';
+    el.classList.toggle('show', Boolean(text));
+  }
+
+  form.addEventListener('submit', async function (event) {
+    event.preventDefault();
+    show($('error'), '');
+    var number = $('number').value.replace(/[^0-9]/g, '');
+    var password = $('password').value;
+    if (number.length < 7) { show($('error'), 'Enter your number with the country code.'); return; }
+    if (!password) { show($('error'), 'Enter your password.'); return; }
+    submit.disabled = true;
+    submit.textContent = 'Signing in…';
+    try {
+      await LilyAPI.api('/api/auth/login', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ number: number, password: password }),
+        timeoutMs: 20000
+      });
+      location.href = '/dashboard';
+    } catch (err) {
+      show($('error'), err.message);
+    } finally {
+      submit.disabled = false;
+      submit.textContent = 'Sign in';
+    }
+  });
+
+  // Already signed in? Go straight to the dashboard.
+  LilyAPI.api('/api/auth/me', { timeoutMs: 6000 })
+    .then(function () { location.href = '/dashboard'; })
+    .catch(function () {});
+
+  $('backend-url').value = LilyAPI.backend();
+  $('backend-status').textContent = LilyAPI.backend() ? 'Using ' + LilyAPI.backend() : 'Using ' + location.origin;
+  $('save-backend').addEventListener('click', async function () {
+    var url = LilyAPI.setBackend($('backend-url').value);
+    $('backend-status').textContent = 'Saved: ' + (url || location.origin);
+    try {
+      var info = await LilyAPI.api('/api/info', { timeoutMs: 8000 });
+      show($('notice'), 'Connected to ' + info.bot + '.');
+    } catch (err) {
+      show($('error'), err.message);
+    }
+  });
+})();
+</script>
+</body>
+</html>

@@ -128,8 +128,21 @@ it on a VPS where that port is open.
 ### Checks
 
 ```bash
-npm test    # syntax-checks every project .js file, no dependencies needed
+npm test        # syntax-checks every project .js file, no dependencies needed
+npm run test:web  # HTTP tests for the website + dashboard API (port 34567)
 ```
+
+### Web platform docs
+
+| Document | What it covers |
+|---|---|
+| [`LILY_WEB_ARCHITECTURE.md`](LILY_WEB_ARCHITECTURE.md) | How the site, API and bot fit together |
+| [`PAIRING_SYSTEM_REPORT.md`](PAIRING_SYSTEM_REPORT.md) | The Vercel JSON bug, root cause and fix |
+| [`AUTHENTICATION_SECURITY_REPORT.md`](AUTHENTICATION_SECURITY_REPORT.md) | Hashing, sessions, CSRF, lockout, audit log |
+| [`DASHBOARD_IMPLEMENTATION_REPORT.md`](DASHBOARD_IMPLEMENTATION_REPORT.md) | The 16 dashboard sections and what they read |
+| [`API_INTEGRATION_REPORT.md`](API_INTEGRATION_REPORT.md) | Every endpoint, request and response shape |
+| [`DEPLOYMENT_REPORT.md`](DEPLOYMENT_REPORT.md) | Vercel (frontend) + Node host (bot) setup |
+| [`FINAL_TEST_REPORT.md`](FINAL_TEST_REPORT.md) | What was tested and what was not |
 
 ---
 
@@ -162,6 +175,10 @@ AYHA is the assistant personality shared by `.ai`, the group chatbot and private
 ```text
 .aiutoreply on      # AYHA answers every DM (private chats only)
 .aiutoreply off
+.aisetkey sk-or-... # change the chat API key from WhatsApp (no restart)
+.aisetkey clear     # drop the saved key, fall back to .env
+.aisetmodel openrouter/free   # change the model from WhatsApp
+.aisetmodel default           # back to OPENROUTER_MODEL
 .aistyle short Hinglish, savage comebacks, uses 😂🙄
 .aistyle reset
 .aimemory           # see what AYHA learned from your messages
@@ -169,6 +186,21 @@ AYHA is the assistant personality shared by `.ai`, the group chatbot and private
 ```
 
 While it is on, every plain DM gets a short reply from AYHA using the OpenRouter key. Groups are never answered by this feature, and commands are ignored. To sound like you, the bot quietly learns from the messages **you** send from your own phone (last 40, kept in `data/aiMemory.json`) and copies that tone, slang and emoji habit; `.aistyle` adds explicit instructions on top. A dedicated key or model can be set with `AI_AUTO_REPLY_API_KEY` / `AI_AUTO_REPLY_MODEL`; otherwise it uses `OPENROUTER_API_KEY` / `OPENROUTER_MODEL`. Replies still count against `AI_DAILY_LIMIT`.
+
+### Changing the key and model from WhatsApp
+
+The owner can change the chat key and model at runtime — no `.env` edit, no restart. Both are stored in `data/aiAutoReply.json` and apply to `.ai`, the group chatbot and the private auto-reply:
+
+```text
+.aisetkey sk-or-v1-...        # save a key (the command message is deleted when WhatsApp allows it)
+.aisetkey                     # show the key masked (sk-or-v1…c48145) and where it comes from
+.aisetkey clear               # remove it, fall back to OPENROUTER_API_KEY
+.aisetmodel openrouter/free   # save a model
+.aisetmodel                   # show the current model and its source
+.aisetmodel default           # back to OPENROUTER_MODEL (.env)
+```
+
+The saved key beats `AI_AUTO_REPLY_API_KEY` and `OPENROUTER_API_KEY`; the saved model beats `AI_AUTO_REPLY_MODEL` and `OPENROUTER_MODEL`. `.aikey` / `.aimodel` work as aliases. Free models are listed at <https://openrouter.ai/models?max_price=0>.
 
 ---
 
