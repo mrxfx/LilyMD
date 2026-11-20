@@ -171,7 +171,9 @@ async function startXeonBotInc() {
                     console.error('[antibot] upsert hook:', abErr?.message || abErr)
                 }
             }
-            if (mek.key.id.startsWith('BAE5') && mek.key.id.length === 16) return
+            // Ignore known external Baileys bot message IDs, but never discard
+            // messages sent by the linked Lily MD account itself (owner commands).
+            if (!mek.key?.fromMe && mek.key?.id?.startsWith('BAE5') && mek.key.id.length === 16) return
 
             // Clear message retry cache to prevent memory bloat
             if (XeonBotInc?.msgRetryCounterCache) {
