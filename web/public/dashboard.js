@@ -240,12 +240,25 @@
             '<div class="stack">' +
             '<div class="grid cols-2">' +
               '<section class="card"><h2>AYHA configuration</h2><p class="hint">Applies to .ai, the group chatbot and private auto-reply instantly.</p>' +
-                '<div class="field-group"><label class="field" for="ai-model">Model</label><input id="ai-model" type="text" value="' + esc(ai.model) + '" placeholder="openrouter/free" /></div>' +
-                '<div class="field-group"><label class="field" for="ai-key">API key ' + (ai.keyConfigured ? '(configured · ' + esc(ai.maskedKey) + ')' : '(missing)') + '</label>' +
-                  '<input id="ai-key" type="password" placeholder="sk-or-... (leave blank to keep the current key)" autocomplete="off" /></div>' +
-                '<div class="field-group"><label class="field" for="ai-personality">Personality mode</label>' +
-                  '<select id="ai-personality">' + ['companion', 'professional', 'venom'].map(function (mode) {
-                      return '<option value="' + mode + '"' + (ai.personality === mode ? ' selected' : '') + '>' + mode + '</option>';
+                '<div class="field-group"><label class="field" for="ai-provider">AI provider</label>' +
+                  '<select id="ai-provider">' + (ai.providers || []).map(function (provider) {
+                      var hasKey = ai.keysConfigured && ai.keysConfigured[provider.id];
+                      return '<option value="' + provider.id + '"' + (ai.provider === provider.id ? ' selected' : '') + '>' +
+                          esc(provider.label) + (hasKey ? ' — key saved' : ' — no key yet') + '</option>';
+                  }).join('') + '</select></div>' +
+                '<div class="field-group"><label class="field" for="ai-model">Model</label><input id="ai-model" type="text" value="' + esc(ai.model) + '" placeholder="openrouter/free · gemini-2.0-flash · gpt-4o-mini · llama-3.3-70b-versatile" /></div>' +
+                '<div class="field-group"><label class="field" for="ai-key">' + esc(ai.providerLabel || 'API') + ' key ' + (ai.keyConfigured ? '(configured · ' + esc(ai.maskedKey) + ')' : '(missing)') + '</label>' +
+                  '<input id="ai-key" type="password" placeholder="sk-or-... / AIza... / hf_... / gsk_... (blank keeps it)" autocomplete="off" />' +
+                  '<p class="hint">Each provider keeps its own key and model — switching back does not wipe them.</p></div>' +
+                '<div class="field-group"><label class="field" for="ai-personality">AI agent</label>' +
+                  '<select id="ai-personality">' + [
+                      { id: 'companion', label: 'Companion — warm, playful friend' },
+                      { id: 'professional', label: 'Professional — calm and precise' },
+                      { id: 'venom', label: 'Savage — light roasts, no abuse' },
+                      { id: 'tutor', label: 'Tutor — explains step by step' },
+                      { id: 'coder', label: 'Developer — code-first answers' }
+                  ].map(function (agent) {
+                      return '<option value="' + agent.id + '"' + (ai.personality === agent.id ? ' selected' : '') + '>' + esc(agent.label) + '</option>';
                   }).join('') + '</select></div>' +
                 '<div class="field-group"><label class="field" for="ai-language">Language preference</label>' +
                   '<select id="ai-language">' + ['auto', 'english', 'hindi', 'hinglish', 'bengali', 'benlish'].map(function (lang) {
@@ -253,6 +266,9 @@
                   }).join('') + '</select></div>' +
                 '<div class="field-group"><label class="field" for="ai-style">Talking style notes</label>' +
                   '<textarea id="ai-style" placeholder="short Hinglish, savage comebacks, uses 😂🙄">' + esc(ai.style) + '</textarea></div>' +
+                '<div class="field-group"><label class="field" for="ai-instructions">Custom instructions</label>' +
+                  '<textarea id="ai-instructions" rows="4" placeholder="Always call me Rahul. Keep answers under 3 lines. Never use emoji in code.">' + esc(ai.instructions || '') + '</textarea>' +
+                  '<p class="hint">Sent with every request — .ai, the group chatbot and private auto-reply.</p></div>' +
                 '<div class="row"><button class="btn" data-action="save-ai">Save AYHA settings</button>' +
                   (ai.keyConfigured ? '<button class="btn ghost small" data-action="clear-key">Remove saved key</button>' : '') + '</div>' +
                 '<p class="hint" style="margin-top:10px">Base URL: <span class="mono">' + esc(ai.baseUrl) + '</span> · daily limit ' + esc(data.aiDailyLimit) + '</p>' +
@@ -670,8 +686,10 @@
             } else if (action === 'save-ai') {
                 busy(button, true, 'Saving…');
                 var payload = {
+                    provider: el('ai-provider').value,
                     model: el('ai-model').value.trim(),
                     style: el('ai-style').value,
+                    instructions: el('ai-instructions').value,
                     personality: el('ai-personality').value,
                     language: el('ai-language').value
                 };
@@ -698,7 +716,7 @@
                         timeoutMs: 45000
                     });
                     out.innerHTML = '<div class="banner success">' + esc(result.reply) + '</div><p class="hint">' +
-                        esc(result.model) + ' · ' + esc(result.ms) + 'ms</p>';
+                        esc(result.provider || '') + ' · ' + esc(result.model) + ' · ' + esc(result.ms) + 'ms</p>';
                 } catch (err) {
                     out.innerHTML = '<div class="banner error">' + esc(err.message) + '</div>';
                 } finally {
