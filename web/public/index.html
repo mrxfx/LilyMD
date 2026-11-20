@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lily MD — Pair your WhatsApp</title>
+<link rel="icon" href="/assets/logo.png" />
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #0b0d12;
+    --panel: #141822;
+    --panel-2: #1b2130;
+    --line: #262d3d;
+    --text: #e8ecf5;
+    --muted: #9aa4b8;
+    --accent: #a78bfa;
+    --accent-2: #34d399;
+    --danger: #f87171;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    padding: 32px 18px 56px;
+    background: radial-gradient(1100px 620px at 12% -10%, #241a45 0%, transparent 60%),
+                radial-gradient(900px 520px at 92% 8%, #0f2f2a 0%, transparent 55%),
+                var(--bg);
+    color: var(--text);
+    font: 16px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; }
+  header { display: flex; align-items: center; gap: 14px; margin-bottom: 28px; }
+  header img { width: 52px; height: 52px; border-radius: 14px; border: 1px solid var(--line); object-fit: cover; }
+  header h1 { margin: 0; font-size: 22px; letter-spacing: .2px; }
+  header p { margin: 2px 0 0; color: var(--muted); font-size: 14px; }
+  .card {
+    background: linear-gradient(180deg, var(--panel), var(--panel-2));
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 26px;
+    box-shadow: 0 18px 60px rgba(0,0,0,.35);
+  }
+  h2 { margin: 0 0 6px; font-size: 18px; }
+  .sub { margin: 0 0 22px; color: var(--muted); font-size: 14px; }
+  label { display: block; font-size: 13px; text-transform: uppercase; letter-spacing: .09em; color: var(--muted); margin-bottom: 8px; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  input[type="tel"], input[type="text"] {
+    flex: 1 1 240px;
+    padding: 13px 15px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: #0c1017;
+    color: var(--text);
+    font-size: 16px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    outline: none;
+  }
+  input:focus { border-color: var(--accent); }
+  button {
+    border: 0;
+    border-radius: 12px;
+    padding: 13px 22px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    background: linear-gradient(135deg, var(--accent), #7c5cf5);
+    color: #0b0d12;
+    transition: transform .12s ease, opacity .12s ease;
+  }
+  button:hover:not(:disabled) { transform: translateY(-1px); }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  button.ghost { background: transparent; border: 1px solid var(--line); color: var(--text); font-weight: 500; padding: 11px 16px; }
+  .hint { margin-top: 12px; color: var(--muted); font-size: 13px; }
+  .step { display: none; }
+  .step.on { display: block; }
+  .code {
+    margin: 18px 0 6px;
+    text-align: center;
+    font: 700 40px/1.1 ui-monospace, SFMono-Regular, Menlo, monospace;
+    letter-spacing: .22em;
+    color: var(--accent-2);
+    padding: 18px 10px;
+    border: 1px dashed #2f5f4f;
+    border-radius: 14px;
+    background: rgba(52, 211, 153, .06);
+    word-break: break-all;
+  }
+  .timer { text-align: center; color: var(--muted); font-size: 13px; margin-bottom: 18px; }
+  ol { padding-left: 20px; margin: 0 0 18px; color: var(--text); }
+  ol li { margin-bottom: 6px; }
+  textarea {
+    width: 100%;
+    min-height: 120px;
+    resize: vertical;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: #0c1017;
+    color: var(--text);
+    font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    word-break: break-all;
+  }
+  .msg { margin-top: 14px; font-size: 14px; }
+  .msg.error { color: var(--danger); }
+  .spinner { display: inline-block; width: 14px; height: 14px; margin-right: 8px; vertical-align: -2px;
+    border: 2px solid var(--muted); border-top-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .note { margin: 22px 0 0; padding-top: 18px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+  code.inline { background: #0c1017; border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <img src="/assets/logo.png" alt="Lily MD" onerror="this.style.visibility='hidden'" />
+    <div>
+      <h1>Lily MD</h1>
+      <p>Pair your WhatsApp and take the session with you</p>
+    </div>
+  </header>
+
+  <div class="card">
+    <section class="step on" id="step-start">
+      <h2>Link a device</h2>
+      <p class="sub">Enter the number you want to run Lily MD on. You'll get an 8-character code to type into WhatsApp.</p>
+      <label for="number">WhatsApp number (with country code)</label>
+      <div class="row">
+        <input id="number" type="tel" inputmode="numeric" autocomplete="tel" placeholder="916033352400" />
+        <button id="start">Get pairing code</button>
+      </div>
+      <p class="hint">Digits only, no <code class="inline">+</code> or spaces — for example <code class="inline">916033352400</code>.</p>
+      <p class="msg error" id="start-error" hidden></p>
+    </section>
+
+    <section class="step" id="step-code">
+      <h2>Enter this code in WhatsApp</h2>
+      <p class="sub">On the phone that owns that number:</p>
+      <div class="code" id="code">••••-••••</div>
+      <div class="timer" id="timer">Waiting for you to confirm…</div>
+      <ol>
+        <li>Open WhatsApp</li>
+        <li>Settings → Linked devices</li>
+        <li>Tap <strong>Link a device</strong></li>
+        <li>Choose <strong>Link with phone number instead</strong> and type the code</li>
+      </ol>
+      <p class="msg" id="code-msg">Waiting for your confirmation<span class="spinner"></span></p>
+      <p class="msg error" id="code-error" hidden></p>
+    </section>
+
+    <section class="step" id="step-done">
+      <h2>Linked — here is your SESSION_ID</h2>
+      <p class="sub">Paste this into the <code class="inline">SESSION_ID</code> variable of your host so the bot boots straight into this session. Keep it private: it is full access to this WhatsApp account.</p>
+      <textarea id="session" readonly></textarea>
+      <div class="row" style="margin-top:12px">
+        <button id="copy">Copy SESSION_ID</button>
+        <button class="ghost" id="download">Download .txt</button>
+        <button class="ghost" id="again">Pair another number</button>
+      </div>
+      <p class="msg" id="copy-msg"></p>
+    </section>
+
+    <p class="note">Lily MD is unofficial software built on Baileys and is not affiliated with WhatsApp. Sessions are generated on this server, handed to you once, and dropped from memory after 15 minutes.</p>
+  </div>
+</div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var steps = ['step-start', 'step-code', 'step-done'];
+  var poll = null;
+  var deadline = 0;
+  var lastSession = '';
+
+  function show(step) {
+    steps.forEach(function (id) { $(id).classList.toggle('on', id === step); });
+  }
+
+  function stopPolling() {
+    if (poll) { clearInterval(poll); poll = null; }
+  }
+
+  function tick() {
+    var left = Math.max(0, Math.round((deadline - Date.now()) / 1000));
+    $('timer').textContent = left > 0
+      ? 'Code expires in ' + Math.floor(left / 60) + ':' + String(left % 60).padStart(2, '0')
+      : 'Code expired';
+  }
+
+  async function start() {
+    var number = $('number').value.replace(/[^0-9]/g, '');
+    var err = $('start-error');
+    err.hidden = true;
+    if (number.length < 7) {
+      err.textContent = 'Enter your full number with the country code.';
+      err.hidden = false;
+      return;
+    }
+    $('start').disabled = true;
+    $('start').textContent = 'Contacting WhatsApp…';
+    try {
+      var res = await fetch('/api/pair', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ number: number })
+      });
+      var data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Could not start pairing.');
+      show('step-code');
+      $('code').textContent = '••••-••••';
+      $('code-msg').innerHTML = 'Requesting code<span class="spinner"></span>';
+      $('code-error').hidden = true;
+      deadline = Date.now() + 180000;
+      tick();
+      poll = setInterval(function () { check(data.id); }, 2000);
+      check(data.id);
+    } catch (e) {
+      err.textContent = e.message;
+      err.hidden = false;
+    } finally {
+      $('start').disabled = false;
+      $('start').textContent = 'Get pairing code';
+    }
+  }
+
+  async function check(id) {
+    try {
+      var res = await fetch('/api/status?id=' + encodeURIComponent(id));
+      if (!res.ok) {
+        var miss = await res.json();
+        stopPolling();
+        $('code-msg').hidden = true;
+        $('code-error').textContent = miss.error || 'This session expired. Please start again.';
+        $('code-error').hidden = false;
+        return;
+      }
+      var data = await res.json();
+      if (data.status === 'code') {
+        $('code').textContent = data.code;
+        $('code-msg').innerHTML = 'Waiting for your confirmation<span class="spinner"></span>';
+      }
+      if (data.status === 'connected' && data.sessionId) {
+        stopPolling();
+        lastSession = data.sessionId;
+        $('session').value = data.sessionId;
+        show('step-done');
+      }
+      if (data.status === 'error') {
+        stopPolling();
+        $('code-msg').hidden = true;
+        $('code-error').textContent = data.error || 'Pairing failed. Please try again.';
+        $('code-error').hidden = false;
+      }
+    } catch (e) { /* transient network hiccup — keep polling */ }
+  }
+
+  $('start').addEventListener('click', start);
+  $('number').addEventListener('keydown', function (e) { if (e.key === 'Enter') start(); });
+
+  $('copy').addEventListener('click', async function () {
+    try {
+      await navigator.clipboard.writeText(lastSession);
+      $('copy-msg').textContent = 'Copied — paste it into SESSION_ID on your host.';
+    } catch (e) {
+      $('session').select();
+      $('copy-msg').textContent = 'Press Ctrl/Cmd + C to copy the selection.';
+    }
+  });
+
+  $('download').addEventListener('click', function () {
+    var blob = new Blob([lastSession], { type: 'text/plain' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'lily-md-session.txt';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
+  $('again').addEventListener('click', function () {
+    stopPolling();
+    lastSession = '';
+    $('session').value = '';
+    $('copy-msg').textContent = '';
+    $('number').value = '';
+    show('step-start');
+  });
+
+  setInterval(tick, 1000);
+})();
+</script>
+</body>
+</html>

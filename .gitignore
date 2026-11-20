@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Runtime data
+data/aiMemory.json
+data/aiAutoReply.json
+data/aiUsage.json
+tmp/
+temp/
+
+# Session files (WhatsApp credentials - never commit these)
+session/
+session-backup.txt
+baileys_store.json
+commit-msg.txt
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Log files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor directories and files
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
