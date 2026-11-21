@@ -18,6 +18,8 @@ data/disabledCommands.json
 tmp/
 temp/
 
+# SESSION_ID.txt is committed on purpose so hosts without an environment
+# editor can restore a session. Keep the repository private.
 # Session files (WhatsApp credentials - never commit these)
 session/
 session-backup.txt

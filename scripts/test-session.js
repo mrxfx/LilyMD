@@ -205,6 +205,47 @@ async function run() {
         check('data: prefix and whitespace are tolerated', backup.normaliseSessionId(`data:application/octet-stream;base64, ${Buffer.from('abc').toString('base64')}\n`) === Buffer.from('abc').toString('base64'));
     }
 
+    section('SESSION_ID.txt fallback');
+    {
+        const file = path.join(WORK, 'SESSION_ID.txt');
+        process.env.SESSION_ID_FILE = file;
+        delete process.env.SESSION_ID;
+        const archive = fs.readFileSync(process.env.SESSION_BACKUP_FILE, 'utf8').trim();
+
+        fs.writeFileSync(file, archive + '\n');
+        removeDir(SESSION_DIR);
+        const logs = [];
+        const fromFile = backup.restoreSessionFromEnv({
+            log: { log: (line) => logs.push(line), error: (line) => logs.push(line) }
+        });
+        check('archive in SESSION_ID.txt restores', fromFile.restored === true, fromFile.error);
+        check('restore reports the file as the source', fromFile.source === 'SESSION_ID.txt');
+        check('file restore is logged', logs.some((line) => line.includes('Session restored successfully from SESSION_ID.txt')));
+
+        fs.writeFileSync(file, 'PASTE_LILY_MD_SESSION_HERE\n');
+        removeDir(SESSION_DIR);
+        const placeholderLogs = [];
+        const placeholder = backup.restoreSessionFromEnv({
+            log: { log: (line) => placeholderLogs.push(line), error: (line) => placeholderLogs.push(line) }
+        });
+        check('placeholder is not used as a session', placeholder.reason === 'missing' && !fs.existsSync(SESSION_DIR));
+        check('placeholder is explained in the log', placeholderLogs.some((line) => line.includes('placeholder')));
+
+        process.env.SESSION_ID = archive;
+        fs.writeFileSync(file, 'not-a-session');
+        removeDir(SESSION_DIR);
+        check(
+            'SESSION_ID env wins over the file',
+            backup.restoreSessionFromEnv({ log: { log: () => {}, error: () => {} } }).restored === true
+        );
+
+        delete process.env.SESSION_ID;
+        removeDir(SESSION_DIR);
+        check('invalid file content is rejected', backup.restoreSessionFromEnv({ log: { log: () => {}, error: () => {} } }).reason === 'invalid');
+        check('sessionIdFile honours SESSION_ID_FILE', backup.sessionIdFile() === path.resolve(file));
+        check('sessionIdSource reports the file', backup.sessionIdSource().source === 'file');
+    }
+
     section('Security and delivery');
     {
         process.env.SESSION_ID = makeArchive([

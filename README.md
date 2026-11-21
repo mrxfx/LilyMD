@@ -91,6 +91,7 @@ Optional settings (all default to off/disabled):
 | `OPENWEATHER_API_KEY` | OpenWeather key for `.weather`. |
 | `OPENAI_API` / `GEMINI_API` / `CLAUDE_API` | Comma-separated provider keys used by AYHA when OpenRouter is unavailable. |
 | `SESSION_ID` | Base64 session backup restored on boot (see **Session persistence**). |
+| `SESSION_ID_FILE` | Fallback file read when `SESSION_ID` is empty (default `SESSION_ID.txt`). |
 | `SESSION_BACKUP_INTERVAL_MS` | Periodic backup interval, default `21600000` (6 hours). |
 | `SESSION_BACKUP_DEBOUNCE_MS` | Delay after a credential change before the backup is rewritten, default `20000`. |
 | `SESSION_BACKUP_RETRY_MS` | Retry delay when WhatsApp rejects a backup document, default `600000`. |
@@ -136,6 +137,27 @@ entries are refused. Startup logs are one of:
 🔐 Session restored successfully from SESSION_ID
 ⚠️ No valid saved session found. Pairing required.
 ```
+
+### Restoring without panel environment variables
+
+Some hosts have no environment editor. Instead of `SESSION_ID`, paste the same
+backup into **`SESSION_ID.txt`** in the repository root and let the panel pull
+the new commit:
+
+1. Open `SESSION_ID.txt` on GitHub and replace the placeholder line with the
+   contents of `LILY-MD-SESSION.txt` (one base64 line).
+2. Commit. Keep the repository **private** — anyone holding this file controls
+   that WhatsApp account.
+3. Restart or redeploy. Startup logs
+   `🔐 Session restored successfully from SESSION_ID.txt`.
+
+`SESSION_ID` (environment) wins when both are set, so the value can be rotated
+in the panel without editing the repository again. The placeholder
+`PASTE_LILY_MD_SESSION_HERE` is ignored and never treated as a session.
+
+**If the repository is public, do not use this file.** Remove it, pair again to
+rotate the credentials, and treat the old backup as compromised: git history
+keeps it forever.
 
 Environment-variable restore is what survives a hosting provider deleting
 ephemeral container storage — OptikLink containers are recreated without
