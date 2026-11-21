@@ -60,7 +60,7 @@ const { runMigrations } = require('./lib/migrate')
 const dbMemory = require('./lib/dbMemory')
 const aiContacts = require('./lib/aiContacts')
 const aiStyle = require('./lib/aiStyle')
-const { startScheduler } = require('./lib/scheduler')
+const scheduler = require('./lib/scheduler')
 setInterval(() => store.writeToFile(), settings.storeWriteInterval || 10000)
 
 // Memory optimization - Force garbage collection if available
@@ -489,7 +489,7 @@ webApi.setRuntime({
 })
 
 // Persistent scheduler: resumes pending message/status jobs from MySQL.
-startScheduler({ getSock: () => currentSock, isConnected: () => isConnected })
+scheduler.start({ getSock: () => currentSock, isConnected: () => isConnected })
 
 // Start the bot with error handling
 startXeonBotInc().catch(error => {
