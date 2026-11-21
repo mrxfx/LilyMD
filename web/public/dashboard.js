@@ -15,28 +15,33 @@
     var live = { status: null };
 
     var VIEWS = [
-        { id: 'overview', label: 'Overview', icon: '📊', group: 'Bot' },
-        { id: 'connection', label: 'WhatsApp connection', icon: '🔗', group: 'Bot' },
-        { id: 'ai', label: 'AI Brain — AYHA', icon: '🧠', group: 'Intelligence' },
-        { id: 'autoreply', label: 'Auto reply', icon: '💬', group: 'Intelligence' },
-        { id: 'commands', label: 'Commands', icon: '⌨️', group: 'Intelligence' },
-        { id: 'plugins', label: 'Plugins', icon: '🧩', group: 'Intelligence' },
-        { id: 'groups', label: 'Group management', icon: '👥', group: 'Control' },
-        { id: 'protection', label: 'Protection', icon: '🛡️', group: 'Control' },
-        { id: 'autostatus', label: 'Auto status', icon: '📱', group: 'Control' },
-        { id: 'media', label: 'Media & downloads', icon: '🎬', group: 'Control' },
-        { id: 'themes', label: 'Themes & mode', icon: '🎨', group: 'Control' },
-        { id: 'owners', label: 'Owner management', icon: '👑', group: 'Access' },
-        { id: 'memory', label: 'Database & memory', icon: '🗄️', group: 'Access' },
-        { id: 'logs', label: 'Logs & analytics', icon: '📈', group: 'Access' },
-        { id: 'security', label: 'Security', icon: '🔐', group: 'Access' },
-        { id: 'settings', label: 'General settings', icon: '⚙️', group: 'Access' }
+        { id: 'overview', label: 'Overview', icon: 'grid', group: 'Bot' },
+        { id: 'connection', label: 'WhatsApp connection', icon: 'link', group: 'Bot' },
+        { id: 'ai', label: 'AI Brain — AYHA', icon: 'cpu', group: 'Intelligence' },
+        { id: 'autoreply', label: 'Auto reply', icon: 'chat', group: 'Intelligence' },
+        { id: 'commands', label: 'Commands', icon: 'terminal', group: 'Intelligence' },
+        { id: 'plugins', label: 'Plugins', icon: 'plug', group: 'Intelligence' },
+        { id: 'groups', label: 'Group management', icon: 'users', group: 'Control' },
+        { id: 'protection', label: 'Protection', icon: 'shield', group: 'Control' },
+        { id: 'autostatus', label: 'Auto status', icon: 'eye', group: 'Control' },
+        { id: 'media', label: 'Media & downloads', icon: 'film', group: 'Control' },
+        { id: 'themes', label: 'Themes & mode', icon: 'palette', group: 'Control' },
+        { id: 'owners', label: 'Owner management', icon: 'user-check', group: 'Access' },
+        { id: 'memory', label: 'Database & memory', icon: 'database', group: 'Access' },
+        { id: 'logs', label: 'Logs & analytics', icon: 'trend', group: 'Access' },
+        { id: 'security', label: 'Security', icon: 'lock', group: 'Access' },
+        { id: 'settings', label: 'General settings', icon: 'sliders', group: 'Access' }
     ];
 
     /* ------------------------------------------------------------- helpers */
 
     function el(id) { return document.getElementById(id); }
     function view() { return el('view'); }
+
+    // Icons come from the inline SVG sprite in dashboard.html.
+    function icon(name, extra) {
+        return '<svg class="icon ' + (extra || '') + '" aria-hidden="true"><use href="#i-' + name + '"></use></svg>';
+    }
 
     function toast(text, kind) {
         var node = document.createElement('div');
@@ -98,8 +103,8 @@
         Object.keys(groups).forEach(function (group) {
             html += '<div class="nav-group">' + esc(group) + '</div>';
             groups[group].forEach(function (item) {
-                html += '<button class="nav-item" data-view="' + item.id + '"><span class="ico">' + item.icon +
-                    '</span><span>' + esc(item.label) + '</span></button>';
+                html += '<button class="nav-item" data-view="' + item.id + '">' + icon(item.icon) +
+                    '<span>' + esc(item.label) + '</span></button>';
             });
         });
         el('nav').innerHTML = html;
@@ -227,7 +232,7 @@
               '<p class="hint" style="margin-top:14px">Session credentials are never exposed to this page.</p>' +
             '</section>' +
             '<section class="card"><h2>Link another device</h2><p class="hint">Open the pairing page to link a different number; the current session stays until you disconnect it.</p>' +
-              '<a class="btn ghost small" href="/" target="_blank" rel="noopener">Open pairing page ↗</a></section>' +
+              '<a class="btn ghost small" href="/" target="_blank" rel="noopener">Open pairing page' + icon('arrow', 'sm') + '</a></section>' +
             '</div>';
     };
 
@@ -265,7 +270,7 @@
                       return '<option value="' + lang + '"' + (ai.language === lang ? ' selected' : '') + '>' + lang + '</option>';
                   }).join('') + '</select></div>' +
                 '<div class="field-group"><label class="field" for="ai-style">Talking style notes</label>' +
-                  '<textarea id="ai-style" placeholder="short Hinglish, savage comebacks, uses 😂🙄">' + esc(ai.style) + '</textarea></div>' +
+                  '<textarea id="ai-style" placeholder="short Hinglish, dry humour, quick comebacks">' + esc(ai.style) + '</textarea></div>' +
                 '<div class="field-group"><label class="field" for="ai-instructions">Custom instructions</label>' +
                   '<textarea id="ai-instructions" rows="4" placeholder="Always call me Rahul. Keep answers under 3 lines. Never use emoji in code.">' + esc(ai.instructions || '') + '</textarea>' +
                   '<p class="hint">Sent with every request — .ai, the group chatbot and private auto-reply.</p></div>' +
@@ -307,8 +312,8 @@
                       '<label class="switch"><input type="checkbox" data-pv-vision="' + slot.id + '"' + (slot.vision ? ' checked' : '') + ' /><span class="track"></span></label><span class="hint">vision</span></div>' +
                     '<div class="row" style="margin-top:12px"><button class="btn small" data-action="pv-save" data-slot="' + slot.id + '">Save</button>' +
                       '<button class="btn ghost small" data-action="pv-test" data-slot="' + slot.id + '">Test</button>' +
-                      '<button class="btn ghost small" data-action="pv-up" data-slot="' + slot.id + '">↑</button>' +
-                      '<button class="btn ghost small" data-action="pv-down" data-slot="' + slot.id + '">↓</button></div>' +
+                      '<button class="btn ghost icon-only small" data-action="pv-up" data-slot="' + slot.id + '" aria-label="Move up">' + icon('up', 'sm') + '</button>' +
+                      '<button class="btn ghost icon-only small" data-action="pv-down" data-slot="' + slot.id + '" aria-label="Move down">' + icon('down', 'sm') + '</button></div>' +
                     '<div id="pv-result-' + slot.id + '" style="margin-top:10px"></div></div>';
               }).join('') + '</div>' +
               '<p class="hint" style="margin-top:12px">Keys are stored server-side only (never in the page, never in logs). A custom OpenAI-compatible endpoint needs only Base URL + Model + Key.</p>' +

@@ -140,9 +140,9 @@
     <h2 class="display">One console for the whole number.</h2>
     <p>Connection health, AYHA behaviour, protection switches, memory and session control — each panel reads the running bot, not a copy of it.</p>
     <div class="panel-list">
-      <div><svg class="icon sm"><use href="#i-shield"/></svg>Owner numbers only, scrypt-hashed passwords</div>
-      <div><svg class="icon sm"><use href="#i-device"/></svg>HttpOnly sessions with CSRF protection</div>
-      <div><svg class="icon sm"><use href="#i-receipt"/></svg>Every change written to the audit log</div>
+      <div><svg class="icon sm" aria-hidden="true"><use href="#i-shield"/></svg>Owner numbers only, scrypt-hashed passwords</div>
+      <div><svg class="icon sm" aria-hidden="true"><use href="#i-device"/></svg>HttpOnly sessions with CSRF protection</div>
+      <div><svg class="icon sm" aria-hidden="true"><use href="#i-receipt"/></svg>Every change written to the audit log</div>
     </div>
   </div>
 
@@ -169,7 +169,7 @@
         <input id="password" type="password" autocomplete="current-password" placeholder="••••••••••" required />
       </div>
       <button class="btn block" id="submit" type="submit">
-        <svg class="icon sm"><use href="#i-lock"/></svg>
+        <svg class="icon sm" aria-hidden="true"><use href="#i-lock"/></svg>
         Sign in
       </button>
     </form>
@@ -227,7 +227,7 @@
       show($('error'), err.message);
     } finally {
       submit.disabled = false;
-      submit.innerHTML = '<svg class="icon sm"><use href="#i-lock"/></svg> Sign in';
+      submit.innerHTML = '<svg class="icon sm" aria-hidden="true"><use href="#i-lock"/></svg> Sign in';
     }
   });
 
