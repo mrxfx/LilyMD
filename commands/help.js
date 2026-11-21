@@ -81,14 +81,42 @@ async function helpCommand(sock, chatId, message) {
 ║ ➤ .autoreact <on/off>
 ║ ➤ .autostatus <on/off>
 ║ ➤ .autostatus react <on/off>
+║ ➤ .aistatusreaction <emoji>
+║ ➤ .aistatusreaction reset
 ║ ➤ .savestatus [on/off]
 ║ ➤ .autotyping <on/off>
 ║ ➤ .autoread <on/off>
 ║ ➤ .aiutoreply <on/off>
+║ ➤ .aiutoreply mode <private/group/all/off>
+║ ➤ .aiutoreply cooldown <seconds>
+║ ➤ .aiprovider (3 slots + order)
+║ ➤ .aiprovider key/baseurl/model <slot> <value>
+║ ➤ .aiprovider test <slot>
+║ ➤ .aiprovider models <slot> [search]
+║ ➤ .aipause <30m/1h/2h30m>
+║ ➤ .airesume [number]
+║ ➤ .aiquiet <on/off/23:00-07:00>
+║ ➤ .aicontact <number> <on/off/never/tone/lang/delay>
+║ ➤ .ainever <number/list/remove>
+║ ➤ .aiguard <on/off/notify/handoff>
 ║ ➤ .aisetkey <sk-or-...>
 ║ ➤ .aisetmodel <model>
 ║ ➤ .aistyle <description>
 ║ ➤ .aimemory
+║ ➤ .aimemory <number>
+║ ➤ .aimemory export
+║ ➤ .aimemory set <number> <key> <value>
+║ ➤ .aimemory forget <number> <key>
+║ ➤ .aimemory clear <number|all>
+║ ➤ .aistatus
+║ ➤ .dbstatus
+║ ➤ .schedule
+║ ➤ .schedule list
+║ ➤ .schedule edit <id> <time|text|repeat> <value>
+║ ➤ .schedule cancel <id>
+║ ➤ .schedule delete <id>
+║ ➤ .schedule history
+║ ➤ .schedule status
 ║ ➤ .anticall <on/off>
 ║ ➤ .pmblocker <on/off/status>
 ║ ➤ .pmblocker setmsg <text>

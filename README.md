@@ -60,12 +60,19 @@ npm install
 
 ### Configure
 
-Copy `.env.example` to `.env` and set your OpenRouter key:
+Copy `.env.example` to `.env` and set your OpenRouter key and MySQL details:
 
 ```env
 OPENROUTER_API_KEY=sk-or-...
 OPENROUTER_MODEL=openrouter/free
 GITHUB_REPO=owner/repo
+
+DB_HOST=your-mysql-host
+DB_PORT=3306
+DB_NAME=your-database
+DB_USER=your-database-user
+DB_PASSWORD=your-database-password
+DB_CONNECTION_LIMIT=10
 ```
 
 `OPENROUTER_MODEL` is optional — it defaults to `openrouter/free`, OpenRouter's Free Models Router. Without a key the bot still runs; `.ai` and the chatbot fall back to the public AI endpoints.
@@ -85,7 +92,7 @@ Optional settings (all default to off/disabled):
 | `OPENAI_API` / `GEMINI_API` / `CLAUDE_API` | Comma-separated provider keys used by AYHA when OpenRouter is unavailable. |
 | `SESSION_ID` | Base64 session backup to restore on boot (see below). |
 
-Bot name, owner, sticker pack name and API endpoints live in `settings.js`. There is no database: state is kept in the JSON files under `data/`, and the WhatsApp session is stored in `./session`.
+Bot name, owner, sticker pack name and API endpoints live in `settings.js`. AYHA memory and the schedule queue are stored in MySQL; small JSON caches and the WhatsApp session live under `data/` and `./session`. If MySQL is not configured the bot still runs and keeps memory in the local JSON cache, but scheduling needs the database.
 
 ### Run
 
@@ -203,6 +210,29 @@ The owner can change the chat key and model at runtime — no `.env` edit, no re
 The saved key beats `AI_AUTO_REPLY_API_KEY` and `OPENROUTER_API_KEY`; the saved model beats `AI_AUTO_REPLY_MODEL` and `OPENROUTER_MODEL`. `.aikey` / `.aimodel` work as aliases. Free models are listed at <https://openrouter.ai/models?max_price=0>.
 
 ---
+
+### MySQL storage, memory and scheduling
+
+AYHA memory and the schedule queue live in MySQL (OptikLink). Set `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` and optionally `DB_CONNECTION_LIMIT` in the panel — never in git. Pending migrations run automatically on startup (`CREATE TABLE IF NOT EXISTS`; existing rows are never dropped). Check a deployment with `npm run db:check`.
+
+```text
+.dbstatus                     # connection, latency, table counts (no credentials)
+.aistatus                     # AYHA memory + scheduler state
+.aimemory export              # JSON backup of memory
+.aimemory set 1 location Delhi
+.aimemory forget 1 location
+
+.schedule new 2026-11-22 09:30 | 916033271400 | Good morning
+.schedule new +2h 916033271400 Hello
+.schedule new 20:30 916033271400 | caption   # reply to an image/video/document
+.schedule list | cancel <id> | delete <id> | history
+.schedule edit <id> time +3h | text <new text> | repeat weekly
+.schedule status [list|cancel <id>]
+.schedule statusnew 2026-11-22 09:30 | My status text
+.schedule confirm <token>     # nothing is saved until you confirm
+```
+
+Every schedule is previewed and confirmed, validated (recipient, group membership, media type and size), stored in MySQL and sent by a worker that claims jobs atomically, retries temporary failures with backoff, never retries permanent ones, and resumes after a restart or reconnect. Media is kept in `data/schedules/` (gitignored, max 16 MB by default). Status publishing uses Baileys' `status@broadcast` with `statusJidList`; if the connected library cannot send it, the job fails loudly and is never reported as published. Time zone defaults to `Asia/Kolkata` (`SCHEDULE_TIMEZONE`).
 
 ## 📖 About
 

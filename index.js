@@ -55,6 +55,12 @@ const settings = require('./settings')
 const { channelInfo } = require('./lib/messageConfig')
 const { restoreSessionFromEnv, scheduleSessionBackup } = require('./lib/sessionBackup')
 const { startHealthServer } = require('./lib/healthServer')
+const database = require('./lib/db')
+const { runMigrations } = require('./lib/migrate')
+const dbMemory = require('./lib/dbMemory')
+const aiContacts = require('./lib/aiContacts')
+const aiStyle = require('./lib/aiStyle')
+const { startScheduler } = require('./lib/scheduler')
 setInterval(() => store.writeToFile(), settings.storeWriteInterval || 10000)
 
 // Memory optimization - Force garbage collection if available
@@ -111,9 +117,37 @@ const question = (text) => {
 }
 
 
+let dbBootstrapped = false
+
+// Connect + migrate + hydrate persistent AYHA memory once. Failures are logged
+// without credentials and never stop the bot from connecting to WhatsApp.
+async function bootstrapDatabase() {
+    if (dbBootstrapped || !database.configured()) return
+    dbBootstrapped = true
+    const ok = await database.connect()
+    if (!ok) return
+    const migrated = await runMigrations()
+    if (!migrated.ok) return
+    try {
+        const records = await dbMemory.loadAllContacts()
+        if (records?.length) {
+            const added = aiContacts.hydrateFromDb(records)
+            if (added) console.log(`[db] restored ${added} contact memor${added === 1 ? 'y' : 'ies'} from MySQL`)
+        }
+        const styleSamples = await dbMemory.loadStyleSamples()
+        if (styleSamples?.length) {
+            for (const sample of styleSamples) aiStyle.observeOwnerMessage(sample)
+        }
+        await dbMemory.cleanup()
+    } catch (error) {
+        console.error('[db] memory hydration failed:', database.safeError(error))
+    }
+}
+
 async function startXeonBotInc() {
     try {
         restoreSessionFromEnv()
+        await bootstrapDatabase().catch((error) => console.error('[db] bootstrap failed:', database.safeError(error)))
         let { version, isLatest } = await fetchLatestBaileysVersion()
         const { state, saveCreds } = await useMultiFileAuthState(`./session`)
         const msgRetryCounterCache = new NodeCache()
@@ -453,6 +487,9 @@ webApi.setRuntime({
         }))
     }
 })
+
+// Persistent scheduler: resumes pending message/status jobs from MySQL.
+startScheduler({ getSock: () => currentSock, isConnected: () => isConnected })
 
 // Start the bot with error handling
 startXeonBotInc().catch(error => {

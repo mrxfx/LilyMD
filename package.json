@@ -14,7 +14,11 @@
     "install:force": "npm install --force",
     "website": "node web/server.js",
     "test": "node scripts/check-syntax.js",
-    "test:web": "node scripts/test-web.js"
+    "test:web": "node scripts/test-web.js",
+    "test:ai": "node scripts/test-ai-engine.js",
+    "test:status": "node scripts/test-status-reaction.js",
+    "test:db": "node scripts/test-db-scheduling.js",
+    "db:check": "node scripts/db-check.js"
   },
   "keywords": [
     "whatsapp-bot",
@@ -36,6 +40,7 @@
     "cheerio": "^1.0.0-rc.12",
     "cookie": "^0.5.0",
     "dotenv": "^16.4.5",
+    "mysql2": "^3.11.5",
     "events": "^3.3.0",
     "file-type": "^16.5.4",
     "fluent-ffmpeg": "^2.1.3",

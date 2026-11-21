@@ -280,9 +280,38 @@
                 '<div id="ai-result" style="margin-top:14px"></div></section>' +
             '</div>' +
             '<section class="card"><h2>How AYHA learns you</h2><p class="hint">' +
-              'The bot reads the plain messages you send from your own phone (never groups, never commands) and mirrors that tone. ' +
-              'Style notes above are layered on top.</p>' +
-              '<div class="row"><a class="btn ghost small" href="#memory">Inspect memory</a><a class="btn ghost small" href="#autoreply">Auto-reply settings</a></div>' +
+              'The bot reads the plain messages you send from your own phone (never commands, never bots) and mirrors that tone. ' +
+              'Style notes above are layered on top, and every chat has its own separate memory.</p>' +
+              '<div class="row"><a class="btn ghost small" href="#memory">Inspect style &amp; contacts</a><a class="btn ghost small" href="#autoreply">Auto-reply settings</a></div>' +
+            '</section>' +
+            '<section class="card"><h2>Provider slots &amp; failover</h2>' +
+              '<p class="hint">Primary &rarr; Fallback 1 &rarr; Fallback 2. A slot is skipped when it is off, has no key, or has no vision support for an image. ' +
+              'Order: <span class="mono">' + esc((ai.providerOrder || []).join(' → ')) + '</span>' +
+              ((ai.providerSummary && ai.providerSummary.active) ? ' · active: <strong>' + esc(ai.providerSummary.active) + '</strong>' : ' · nothing active yet') + '</p>' +
+              '<div class="grid cols-3">' + (ai.providerSlots || []).slice().sort(function (a, b) {
+                  return (ai.providerOrder || []).indexOf(a.id) - (ai.providerOrder || []).indexOf(b.id);
+              }).map(function (slot) {
+                  return '<div class="card" style="box-shadow:none"><h3>' + esc(slot.label) + '</h3>' +
+                    '<p class="hint">' + esc(slot.providerLabel) + ' · ' + (slot.enabled ? (slot.keyConfigured ? 'ready' : 'no key') : 'off') + (slot.vision ? ' · vision' : '') + '</p>' +
+                    '<div class="field-group"><label class="field">Provider</label><select data-pv-provider="' + slot.id + '">' +
+                      (ai.providers || []).map(function (provider) {
+                          return '<option value="' + provider.id + '"' + (slot.provider === provider.id ? ' selected' : '') + '>' + esc(provider.label) + '</option>';
+                      }).join('') + '</select></div>' +
+                    '<div class="field-group"><label class="field">Base URL</label><input data-pv-base="' + slot.id + '" type="text" value="' + esc(slot.baseUrl) + '" placeholder="https://api.example.com/v1" /></div>' +
+                    '<div class="field-group"><label class="field">Model</label><div class="row"><input data-pv-model="' + slot.id + '" type="text" value="' + esc(slot.model) + '" placeholder="model id" />' +
+                      '<button class="btn ghost small" data-action="pv-models" data-slot="' + slot.id + '">List</button></div>' +
+                      '<div id="pv-models-' + slot.id + '"></div></div>' +
+                    '<div class="field-group"><label class="field">API key ' + (slot.keyConfigured ? '(' + esc(slot.maskedKey) + ')' : '(missing)') + '</label>' +
+                      '<input data-pv-key="' + slot.id + '" type="password" autocomplete="off" placeholder="blank keeps the saved key" /></div>' +
+                    '<div class="row"><label class="switch"><input type="checkbox" data-pv-enabled="' + slot.id + '"' + (slot.enabled ? ' checked' : '') + ' /><span class="track"></span></label><span class="hint">enabled</span>' +
+                      '<label class="switch"><input type="checkbox" data-pv-vision="' + slot.id + '"' + (slot.vision ? ' checked' : '') + ' /><span class="track"></span></label><span class="hint">vision</span></div>' +
+                    '<div class="row" style="margin-top:12px"><button class="btn small" data-action="pv-save" data-slot="' + slot.id + '">Save</button>' +
+                      '<button class="btn ghost small" data-action="pv-test" data-slot="' + slot.id + '">Test</button>' +
+                      '<button class="btn ghost small" data-action="pv-up" data-slot="' + slot.id + '">↑</button>' +
+                      '<button class="btn ghost small" data-action="pv-down" data-slot="' + slot.id + '">↓</button></div>' +
+                    '<div id="pv-result-' + slot.id + '" style="margin-top:10px"></div></div>';
+              }).join('') + '</div>' +
+              '<p class="hint" style="margin-top:12px">Keys are stored server-side only (never in the page, never in logs). A custom OpenAI-compatible endpoint needs only Base URL + Model + Key.</p>' +
             '</section></div>';
     };
 
@@ -297,8 +326,43 @@
             { id: 'group', label: 'GROUP ONLY' },
             { id: 'all', label: 'ALL CHATS' }
         ];
+        var controls = data.controls || { pause: {}, quiet: {}, neverReply: [] };
         view().innerHTML =
             '<div class="stack">' +
+            '<section class="card"><h2>Smart controls</h2>' +
+              '<p class="hint">Persisted across restarts. Quiet hours and a manual pause are silent: AYHA sends nothing and no notice.</p>' +
+              '<div class="grid cols-3">' +
+                '<div class="stat"><div class="label">Auto-reply</div><div class="value small">' + (controls.pause && controls.pause.paused ? 'Paused' : 'Running') + '</div><div class="sub">' +
+                  (controls.pause && controls.pause.paused ? esc(controls.pause.left + ' left') : 'no manual pause') + '</div></div>' +
+                '<div class="stat"><div class="label">Quiet hours</div><div class="value small">' + (controls.quiet && controls.quiet.enabled ? 'On' : 'Off') + '</div><div class="sub">' +
+                  (controls.quiet && controls.quiet.enabled ? esc(controls.quiet.label + (controls.quiet.active ? ' · active now' : '')) : 'always available') + '</div></div>' +
+                '<div class="stat"><div class="label">Sensitive guard</div><div class="value small">' + (controls.sensitiveMode === 'hold' ? 'Hold' : 'Off') + '</div><div class="sub">' +
+                  (controls.notifyOwner ? 'owner notice on' : 'owner notice off') + '</div></div>' +
+              '</div>' +
+              '<div class="row" style="margin-top:14px"><button class="btn ghost small" data-action="ai-pause" data-duration="30m">Pause 30m</button>' +
+                '<button class="btn ghost small" data-action="ai-pause" data-duration="1h">Pause 1h</button>' +
+                '<button class="btn ghost small" data-action="ai-pause" data-duration="4h">Pause 4h</button>' +
+                '<button class="btn small" data-action="ai-resume">Resume now</button></div>' +
+              '<div class="grid cols-2" style="margin-top:18px">' +
+                '<div><div class="field-group"><label class="field">Quiet hours (HH:MM – HH:MM)</label><div class="row">' +
+                  '<input id="quiet-start" type="text" value="' + esc(controls.quiet.start || '23:00') + '" placeholder="23:00" style="max-width:110px" />' +
+                  '<input id="quiet-end" type="text" value="' + esc(controls.quiet.end || '07:00') + '" placeholder="07:00" style="max-width:110px" />' +
+                  '<label class="switch"><input id="quiet-enabled" type="checkbox"' + (controls.quiet.enabled ? ' checked' : '') + ' /><span class="track"></span></label></div>' +
+                  '<p class="hint">Timezone: ' + esc(controls.quiet.timezone || 'Asia/Kolkata') + '</p></div>' +
+                  '<div class="field-group"><label class="field" for="handoff-minutes">Handoff after your manual reply (minutes, 0 = off)</label>' +
+                    '<input id="handoff-minutes" type="number" min="0" max="1440" value="' + esc(controls.handoffMinutes) + '" /></div></div>' +
+                '<div><div class="field-group"><label class="field" for="sensitive-mode">Sensitive messages (OTP, password, payment, private info, conflict)</label>' +
+                  '<select id="sensitive-mode"><option value="hold"' + (controls.sensitiveMode === 'hold' ? ' selected' : '') + '>Hold — never auto-reply</option>' +
+                  '<option value="off"' + (controls.sensitiveMode === 'off' ? ' selected' : '') + '>Off — reply normally</option></select></div>' +
+                  '<div class="row" style="margin:10px 0 14px"><label class="switch"><input id="notify-owner" type="checkbox"' + (controls.notifyOwner ? ' checked' : '') + ' /><span class="track"></span></label><span class="hint">Send me a notice (category only, never the content)</span></div>' +
+                  '<button class="btn" data-action="save-controls">Save controls</button></div>' +
+              '</div>' +
+              '<div class="field-group" style="margin-top:18px"><label class="field">Never-reply numbers</label>' +
+                '<div class="row"><input id="never-input" type="text" placeholder="916033271400" /><button class="btn ghost small" data-action="never-add">Add</button></div>' +
+                '<div class="list" style="margin-top:10px">' + ((controls.neverReply || []).length ? controls.neverReply.map(function (n) {
+                    return '<div class="list-item"><span class="mono">' + esc(n) + '</span><button class="btn ghost small" data-action="never-remove" data-value="' + esc(n) + '">Remove</button></div>';
+                }).join('') : '<div class="empty">Nobody is on the never-reply list.</div>') + '</div></div>' +
+            '</section>' +
             '<section class="card"><h2>Master switch</h2><p class="hint">Only the owner can change this. Changes persist across restarts.</p>' +
               switchRow('autoreply', ai.enabled, 'Auto-reply enabled', 'AYHA answers according to the mode below', 'autoreply-enabled') +
               '<div class="field-group" style="margin-top:16px"><label class="field">Mode</label><div class="pill-row">' +
@@ -503,7 +567,20 @@
                     return '<div class="list-item"><span>' + esc(sample) + '</span></div>';
                 }).join('') + '</div>' : '<div class="empty">No style samples learned yet.</div>') +
                 (facts.length ? '<p class="hint" style="margin-top:12px">Facts: ' + esc(facts.map(function (k) { return k + '=' + memory.facts[k]; }).join(', ')) + '</p>' : '') +
-                '<div class="row" style="margin-top:14px"><button class="btn danger small" data-action="memory-clear">Clear memory</button></div>' +
+                '<div class="row" style="margin-top:14px"><button class="btn danger small" data-action="memory-clear">Clear style memory</button></div>' +
+              '</section>' +
+              '<section class="card"><h2>Contact memories</h2><p class="hint">One separate memory per chat. Each row is only ever used in that conversation.</p>' +
+                ((memory.contacts || []).length ? '<div class="list">' + memory.contacts.slice(0, 25).map(function (contact) {
+                    return '<div class="list-item"><div><strong class="mono">' + esc(contact.number || contact.chatId) + '</strong>' + (contact.name ? ' · ' + esc(contact.name) : '') +
+                      '<br /><small>' + esc(contact.turns) + ' messages · ' + esc(contact.language || 'unknown') + (contact.facts && Object.keys(contact.facts).length ? ' · ' + esc(Object.keys(contact.facts).map(function (k) { return k + '=' + contact.facts[k]; }).join(', ')) : '') +
+                      (contact.lastMessage ? '<br />“' + esc(contact.lastMessage.slice(0, 80)) + '”' : '') + '</small></div>' +
+                      '<div class="row"><button class="btn ghost small" data-action="contact-mode" data-id="' + esc(contact.chatId) + '" data-mode="on">On</button>' +
+                      '<button class="btn ghost small" data-action="contact-mode" data-id="' + esc(contact.chatId) + '" data-mode="off">Off</button>' +
+                      '<button class="btn ghost small" data-action="contact-mode" data-id="' + esc(contact.chatId) + '" data-mode="never">Never</button>' +
+                      '<button class="btn ghost small" data-action="contact-clear-handoff" data-id="' + esc(contact.chatId) + '">Resume</button>' +
+                      '<button class="btn ghost small" data-action="contact-delete" data-id="' + esc(contact.chatId) + '">Delete</button></div></div>';
+                }).join('') + '</div>' : '<div class="empty">No contact memory stored yet.</div>') +
+                ((memory.contacts || []).length ? '<div class="row" style="margin-top:12px"><button class="btn danger small" data-action="contact-clear">Clear all contact memories</button></div>' : '') +
               '</section>' +
               '<section class="card"><h2>Storage health</h2><p class="hint">Data files on this server.</p>' +
                 '<div class="list">' + data.files.slice(0, 12).map(function (file) {
@@ -778,6 +855,137 @@
                 await mutate('/api/dash/memory/clear', {});
                 toast('Memory cleared', 'success');
                 await route();
+            } else if (action === 'ai-pause') {
+                var duration = button.dataset.duration || '1h';
+                busy(button, true, 'Pausing…');
+                await mutate('/api/dash/ai/controls', { action: 'pause', duration: duration });
+                toast('AYHA paused for ' + duration, 'success');
+                await route();
+            } else if (action === 'ai-resume') {
+                await mutate('/api/dash/ai/controls', { action: 'resume' });
+                toast('AYHA resumed', 'success');
+                await route();
+            } else if (action === 'save-controls') {
+                busy(button, true, 'Saving…');
+                await mutate('/api/dash/ai/controls', {
+                    quietHours: {
+                        enabled: el('quiet-enabled').checked,
+                        start: el('quiet-start').value.trim(),
+                        end: el('quiet-end').value.trim()
+                    },
+                    handoffMinutes: Number(el('handoff-minutes').value),
+                    sensitiveMode: el('sensitive-mode').value,
+                    notifyOwner: el('notify-owner').checked
+                });
+                toast('Controls saved', 'success');
+                await route();
+            } else if (action === 'never-add') {
+                var neverNumber = el('never-input').value.replace(/[^0-9]/g, '');
+                if (neverNumber.length < 7) { toast('Enter a number with country code.', 'error'); return; }
+                await mutate('/api/dash/ai/controls', { neverAdd: neverNumber });
+                toast('Number added to never-reply', 'success');
+                await route();
+            } else if (action === 'never-remove') {
+                await mutate('/api/dash/ai/controls', { neverRemove: button.dataset.value });
+                toast('Number removed', 'success');
+                await route();
+            } else if (action === 'contact-mode') {
+                var mode = button.dataset.mode;
+                var body = mode === 'never' ? { never: true } : { autoReply: mode, never: false };
+                body.id = button.dataset.id;
+                await mutate('/api/dash/ai/contacts/settings', body);
+                toast('Contact rule saved', 'success');
+                await route();
+            } else if (action === 'contact-clear-handoff') {
+                await mutate('/api/dash/ai/controls', { action: 'resume', id: button.dataset.id });
+                toast('AYHA is active for that contact again', 'success');
+                await route();
+            } else if (action === 'contact-delete') {
+                if (!confirm('Delete the stored memory for this contact?')) return;
+                await mutate('/api/dash/ai/contacts/delete', { id: button.dataset.id });
+                toast('Contact memory deleted', 'success');
+                await route();
+            } else if (action === 'contact-clear') {
+                if (!confirm('Delete every contact memory? Style learning is kept.')) return;
+                await mutate('/api/dash/ai/contacts/delete', { all: true });
+                toast('Contact memories cleared', 'success');
+                await route();
+            } else if (action === 'pv-save' || action === 'pv-test' || action === 'pv-models' || action === 'pv-pick' || action === 'pv-up' || action === 'pv-down') {
+                var slotId = button.dataset.slot;
+                var q = function (sel) { return document.querySelector(sel); };
+                if (action === 'pv-save') {
+                    busy(button, true, 'Saving…');
+                    var slotBody = {
+                        slot: slotId,
+                        provider: q('[data-pv-provider="' + slotId + '"]').value,
+                        baseUrl: q('[data-pv-base="' + slotId + '"]').value.trim(),
+                        model: q('[data-pv-model="' + slotId + '"]').value.trim(),
+                        vision: q('[data-pv-vision="' + slotId + '"]').checked,
+                        enabled: q('[data-pv-enabled="' + slotId + '"]').checked
+                    };
+                    var slotKey = q('[data-pv-key="' + slotId + '"]').value.trim();
+                    if (slotKey) slotBody.apiKey = slotKey;
+                    await mutate('/api/dash/ai/providers', slotBody);
+                    toast('Provider slot saved', 'success');
+                    await route();
+                } else if (action === 'pv-test') {
+                    busy(button, true, 'Testing…');
+                    var slotOut = el('pv-result-' + slotId);
+                    if (slotOut) slotOut.innerHTML = '<div class="banner">Sending one real request…</div>';
+                    try {
+                        var slotResult = await api('/api/dash/ai/providers/test', {
+                            method: 'POST',
+                            headers: { 'content-type': 'application/json', 'x-lily-csrf': csrf || '' },
+                            body: JSON.stringify({
+                                slot: slotId,
+                                prompt: 'Say hello in one short line.',
+                                provider: q('[data-pv-provider="' + slotId + '"]').value,
+                                baseUrl: q('[data-pv-base="' + slotId + '"]').value.trim(),
+                                model: q('[data-pv-model="' + slotId + '"]').value.trim(),
+                                apiKey: q('[data-pv-key="' + slotId + '"]').value.trim() || undefined
+                            }),
+                            timeoutMs: 60000
+                        });
+                        if (slotOut) slotOut.innerHTML = '<div class="banner success">' + esc(slotResult.reply || 'ok') + '</div><p class="hint">' + esc(slotResult.provider || '') + ' · ' + esc(slotResult.model || '') + ' · ' + esc(slotResult.ms) + 'ms</p>';
+                    } catch (err) {
+                        if (slotOut) slotOut.innerHTML = '<div class="banner error">' + esc(err.message) + '</div>';
+                    } finally {
+                        busy(button, false);
+                    }
+                } else if (action === 'pv-models') {
+                    busy(button, true, 'Loading…');
+                    var modelOut = el('pv-models-' + slotId);
+                    try {
+                        var listed = await api('/api/dash/ai/providers/models?slot=' + encodeURIComponent(slotId));
+                        if (!listed.ok) {
+                            modelOut.innerHTML = '<p class="hint">' + esc(listed.reason || 'Listing unsupported — type the model id.') + '</p>';
+                        } else if (!listed.models.length) {
+                            modelOut.innerHTML = '<p class="hint">No models returned — type the model id.</p>';
+                        } else {
+                            modelOut.innerHTML = '<div class="pill-row" style="margin-top:8px">' + listed.models.slice(0, 12).map(function (model) {
+                                return '<button class="chip" data-action="pv-pick" data-slot="' + esc(slotId) + '" data-model="' + esc(model) + '">' + esc(model) + '</button>';
+                            }).join('') + '</div><p class="hint">' + esc(listed.models.length) + ' models available</p>';
+                        }
+                    } catch (err) {
+                        modelOut.innerHTML = '<p class="hint">' + esc(err.message) + '</p>';
+                    } finally {
+                        busy(button, false);
+                    }
+                } else if (action === 'pv-pick') {
+                    q('[data-pv-model="' + slotId + '"]').value = button.dataset.model;
+                    toast('Model picked — press Save', 'success');
+                } else if (action === 'pv-up' || action === 'pv-down') {
+                    var currentOrder = (await api('/api/dash/ai/providers')).order.slice();
+                    var index = currentOrder.indexOf(slotId);
+                    var swapWith = action === 'pv-up' ? index - 1 : index + 1;
+                    if (swapWith < 0 || swapWith >= currentOrder.length) return;
+                    var moved = currentOrder[swapWith];
+                    currentOrder[swapWith] = slotId;
+                    currentOrder[index] = moved;
+                    await mutate('/api/dash/ai/providers/order', { order: currentOrder });
+                    toast('Failover order updated', 'success');
+                    await route();
+                }
             } else if (action === 'change-password') {
                 var currentPass = el('cur-pass').value;
                 var newPass = el('new-pass').value;

@@ -1,5 +1,5 @@
 const APIs = require('../lib/api');
-const aiProviders = require('../lib/aiProviders');
+const aiConfig = require('../lib/aiConfig');
 const { buildSystemPrompt, getRuntime } = require('../lib/aiAutoReply');
 const isOwnerOrSudo = require('../lib/isOwner');
 const { checkAiLimit, recordAiUse, limitMessage } = require('../lib/aiLimit');
@@ -36,15 +36,17 @@ async function aiCommand(sock, chatId, message) {
     const steps = [
       [
         `AYHA (${runtime.provider})`,
-        () =>
-          aiProviders.chat(
-            [
-              // The agent, custom instructions and style picked in the dashboard
-              { role: 'system', content: buildSystemPrompt() },
-              { role: 'user', content: query },
-            ],
-            { provider: runtime.provider, apiKey: runtime.apiKey, model: runtime.model }
-          ),
+        async () =>
+          (
+            await aiConfig.chatWithFailover(
+              [
+                // The agent, custom instructions and style picked in the dashboard
+                { role: 'system', content: buildSystemPrompt() },
+                { role: 'user', content: query },
+              ],
+              { depth: 'detailed' }
+            )
+          ).text,
       ],
       ['Knight chat', () => APIs.knightChatAI(query)],
       ['Knight gpt', () => APIs.knightGptAI(query)],

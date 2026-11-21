@@ -18,13 +18,19 @@ const ROOT = path.join(__dirname, '..');
 const PORT = 34567;
 const BASE = `http://127.0.0.1:${PORT}`;
 const TOUCHED = [
-    'webAccounts.json',
-    'webSessions.json',
-    'webAudit.log',
-    'disabledCommands.json',
-    'aiAutoReply.json',
-    'autoread.json',
-    'messageCount.json'
+    path.join('data', 'webAccounts.json'),
+    path.join('data', 'webSessions.json'),
+    path.join('data', 'webAudit.log'),
+    path.join('data', 'disabledCommands.json'),
+    path.join('data', 'aiAutoReply.json'),
+    path.join('data', 'aiProviders.json'),
+    path.join('data', 'aiContacts.json'),
+    path.join('data', 'aiStyle.json'),
+    path.join('data', 'aiControls.json'),
+    path.join('data', 'autoStatus.json'),
+    path.join('data', 'autoread.json'),
+    path.join('data', 'messageCount.json'),
+    path.join('config', 'aiProviders.json')
 ];
 
 let passed = 0;
@@ -43,14 +49,14 @@ function check(name, condition, detail) {
 
 function backupData() {
     for (const file of TOUCHED) {
-        const full = path.join(ROOT, 'data', file);
+        const full = path.join(ROOT, file);
         backups.set(file, fs.existsSync(full) ? fs.readFileSync(full, 'utf8') : null);
     }
 }
 
 function restoreData() {
     for (const file of TOUCHED) {
-        const full = path.join(ROOT, 'data', file);
+        const full = path.join(ROOT, file);
         const previous = backups.get(file);
         try {
             if (previous === null || previous === undefined) {
@@ -264,6 +270,75 @@ async function waitForServer(deadlineMs = 15000) {
         });
         const aiSaved = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'aiAutoReply.json'), 'utf8'));
         check('AI personality/language/style saved', ai.status === 200 && aiSaved.personality === 'venom' && aiSaved.language === 'hinglish');
+
+        console.log('\nAI provider slots & contact memory');
+        const settings2 = await request('/api/dash/settings', { headers: authed });
+        check('settings expose the three provider slots', settings2.json.ai.providerSlots.length === 3, String(settings2.json.ai.providerSlots.length));
+        check('settings never include a raw API key', !JSON.stringify(settings2.json).includes('sk-or-v1-'));
+        check('settings include the failover order', Array.isArray(settings2.json.ai.providerOrder) && settings2.json.ai.providerOrder.length === 3);
+
+        const providersRes = await request('/api/dash/ai/providers', { headers: authed });
+        check('provider slots endpoint → 200', providersRes.status === 200 && providersRes.json.slots.length === 3, providersRes.text);
+        check('slots carry base URL and model but no key', providersRes.json.slots.every((s) => typeof s.baseUrl === 'string' && typeof s.model === 'string' && !('apiKey' in s)));
+
+        const badBase = await request('/api/dash/ai/providers', { method: 'POST', headers: withCsrf, body: { slot: 'fallback2', baseUrl: 'javascript:alert(1)' } });
+        check('invalid base URL rejected', badBase.status === 400, badBase.text);
+        const badSlot = await request('/api/dash/ai/providers', { method: 'POST', headers: withCsrf, body: { slot: 'fourth', model: 'm' } });
+        check('unknown slot rejected', badSlot.status === 400);
+        const badOrder = await request('/api/dash/ai/providers/order', { method: 'POST', headers: withCsrf, body: { order: ['primary', 'nope'] } });
+        check('order with an unknown slot rejected', badOrder.status === 400);
+        const orderOk = await request('/api/dash/ai/providers/order', { method: 'POST', headers: withCsrf, body: { order: ['fallback1', 'primary', 'fallback2'] } });
+        check('valid order saved', orderOk.status === 200 && orderOk.json.order[0] === 'fallback1', orderOk.text);
+        await request('/api/dash/ai/providers/order', { method: 'POST', headers: withCsrf, body: { order: ['primary', 'fallback1', 'fallback2'] } });
+
+        const modelList = await request('/api/dash/ai/providers/models?slot=primary', { headers: authed });
+        check('model listing answers JSON gracefully', modelList.status === 200 && typeof modelList.json.ok === 'boolean', modelList.text);
+        console.log('\nSmart reply controls');
+        const controlsRes = await request('/api/dash/ai/controls', { headers: authed });
+        check('controls endpoint → 200', controlsRes.status === 200 && controlsRes.json.pause && controlsRes.json.quiet, controlsRes.text);
+        check('settings include controls', settings2.json.controls && typeof settings2.json.controls.handoffMinutes === 'number');
+
+        const paused = await request('/api/dash/ai/controls', { method: 'POST', headers: withCsrf, body: { action: 'pause', duration: '30m' } });
+        check('pause accepted', paused.status === 200 && paused.json.controls.pause.paused === true, paused.text);
+        const pausedSettings = await request('/api/dash/settings', { headers: authed });
+        check('pause is visible in settings', pausedSettings.json.controls.pause.paused === true);
+        const resumed = await request('/api/dash/ai/controls', { method: 'POST', headers: withCsrf, body: { action: 'resume' } });
+        check('resume accepted', resumed.status === 200 && resumed.json.controls.pause.paused === false, resumed.text);
+        const badPause = await request('/api/dash/ai/controls', { method: 'POST', headers: withCsrf, body: { action: 'pause', duration: 'whenever' } });
+        check('invalid pause duration rejected', badPause.status === 400, badPause.text);
+
+        const badQuiet = await request('/api/dash/ai/controls', { method: 'POST', headers: withCsrf, body: { quietHours: { enabled: true, start: '25:00', end: '07:00' } } });
+        check('invalid quiet hours rejected', badQuiet.status === 400, badQuiet.text);
+        const quietOk = await request('/api/dash/ai/controls', { method: 'POST', headers: withCsrf, body: { quietHours: { enabled: true, start: '23:00', end: '07:00' } } });
+        check('quiet hours saved', quietOk.status === 200 && quietOk.json.controls.quiet.enabled === true && quietOk.json.controls.quiet.start === '23:00', quietOk.text);
+        await request('/api/dash/ai/controls', { method: 'POST', headers: withCsrf, body: { quietHours: { enabled: false, start: '23:00', end: '07:00' } } });
+
+        const badHandoff = await request('/api/dash/ai/controls', { method: 'POST', headers: withCsrf, body: { handoffMinutes: 5000 } });
+        check('invalid handoff duration rejected', badHandoff.status === 400, badHandoff.text);
+        const handoffOk = await request('/api/dash/ai/controls', { method: 'POST', headers: withCsrf, body: { handoffMinutes: 30 } });
+        check('handoff duration saved', handoffOk.status === 200 && handoffOk.json.controls.handoffMinutes === 30, handoffOk.text);
+
+        const badNever = await request('/api/dash/ai/controls', { method: 'POST', headers: withCsrf, body: { neverAdd: '12' } });
+        check('short never-reply number rejected', badNever.status === 400, badNever.text);
+        const neverOk = await request('/api/dash/ai/controls', { method: 'POST', headers: withCsrf, body: { neverAdd: '916033271400' } });
+        check('never-reply number saved', neverOk.status === 200 && neverOk.json.controls.neverReply.includes('916033271400'), neverOk.text);
+        await request('/api/dash/ai/controls', { method: 'POST', headers: withCsrf, body: { neverRemove: '916033271400' } });
+
+        const contactRulesMissing = await request('/api/dash/ai/contacts/settings', { method: 'POST', headers: withCsrf, body: { id: '000000000000', autoReply: 'off' } });
+        check('contact rules for unknown contact → 404', contactRulesMissing.status === 404, contactRulesMissing.text);
+
+        console.log('\nStatus reaction setting');
+        const reactionSet = await request('/api/dash/settings/autostatus', { method: 'POST', headers: withCsrf, body: { reaction: '🔥' } });
+        check('status reaction saved', reactionSet.status === 200 && reactionSet.json.autoStatus.reaction === '🔥', reactionSet.text);
+        const reactionBad = await request('/api/dash/settings/autostatus', { method: 'POST', headers: withCsrf, body: { reaction: 'heart' } });
+        check('non-emoji status reaction rejected', reactionBad.status === 400, reactionBad.text);
+        const reactionSettings = await request('/api/dash/settings', { headers: authed });
+        check('settings expose the status reaction', reactionSettings.json.autoStatus.reaction === '🔥', JSON.stringify(reactionSettings.json.autoStatus));
+
+        const contactsRes = await request('/api/dash/ai/contacts', { headers: authed });
+        check('contact memory endpoint → 200', contactsRes.status === 200 && Array.isArray(contactsRes.json.contacts), contactsRes.text);
+        const delMissing = await request('/api/dash/ai/contacts/delete', { method: 'POST', headers: withCsrf, body: { id: '000000000000' } });
+        check('deleting an unknown contact → 404', delMissing.status === 404, delMissing.text);
 
         const accounts = await request('/api/dash/owners', { headers: authed });
         check('owners list shows the provisioned account', accounts.json.accounts.some((a) => a.number === '916033352400'));

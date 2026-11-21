@@ -91,7 +91,7 @@ const githubCommand = require('./commands/github');
 const { handleAntiBadwordCommand, handleBadwordDetection } = require('./lib/antibadword');
 const antibadwordCommand = require('./commands/antibadword');
 const { handleChatbotCommand, handleChatbotResponse } = require('./commands/chatbot');
-const { handleAiAutoReply, handleAiAutoReplyCommand, learnOwnerStyle } = require('./lib/aiAutoReply');
+const { handleAiAutoReply, handleAiAutoReplyCommand, learnOwnerStyle, noteOwnerMessage } = require('./lib/aiAutoReply');
 const takeCommand = require('./commands/take');
 const { flirtCommand } = require('./commands/flirt');
 const characterCommand = require('./commands/character');
@@ -107,7 +107,9 @@ const { handleDemotionEvent } = require('./commands/demote');
 const viewOnceCommand = require('./commands/viewonce');
 const vv2Command = require('./commands/vv2');
 const clearSessionCommand = require('./commands/clearsession');
-const { autoStatusCommand, handleStatusUpdate } = require('./commands/autostatus');
+const { autoStatusCommand, statusReactionCommand, handleStatusUpdate } = require('./commands/autostatus');
+const { handleSchedule } = require('./commands/schedule');
+const { dbStatusCommand, aiStatusCommand } = require('./commands/dbstatus');
 const savestatusCommand = require('./commands/savestatus');
 const { autoSave: savestatusAutoSave } = savestatusCommand;
 const groupstatusCommand = require('./commands/groupstatus');
@@ -253,7 +255,21 @@ async function handleMessages(sock, messageUpdate, printLog) {
 
         // AYHA's private auto-reply copies the owner's talking style: learn it
         // from the messages the owner sends themselves.
-        if (message.key.fromMe && rawText) learnOwnerStyle(rawText);
+        if (
+            message.key.fromMe &&
+            rawText &&
+            chatId !== 'status@broadcast' &&
+            !chatId.endsWith('@newsletter') &&
+            !chatId.endsWith('@broadcast')
+        ) {
+            const contextInfo =
+                message.message?.extendedTextMessage?.contextInfo ||
+                message.message?.imageMessage?.contextInfo ||
+                message.message?.videoMessage?.contextInfo;
+            learnOwnerStyle(rawText, { forwarded: Boolean(contextInfo && contextInfo.isForwarded) });
+            // Human handoff: a real message from Rahul pauses AYHA in that chat.
+            noteOwnerMessage(chatId, rawText);
+        }
 
         // Only log command usage
         if (userMessage.startsWith('.')) {
@@ -364,7 +380,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
         const isAdminCommand = adminCommands.some(cmd => userMessage.startsWith(cmd));
 
         // List of owner commands
-        const ownerCommands = ['.mode', '.autostatus', '.savestatus', '.savesm', '.savest', '.antidelete', '.cleartmp', '.setpp', '.clearsession', '.areact', '.autoreact', '.autotyping', '.autoread', '.pmblocker', '.aiutoreply', '.aireply', '.aistyle', '.aimemory', '.aisetkey', '.aikey', '.aisetmodel', '.aimodel'];
+        const ownerCommands = ['.mode', '.autostatus', '.savestatus', '.savesm', '.savest', '.antidelete', '.cleartmp', '.setpp', '.clearsession', '.areact', '.autoreact', '.autotyping', '.autoread', '.pmblocker', '.aiutoreply', '.aireply', '.aistyle', '.aimemory', '.aisetkey', '.aikey', '.aisetmodel', '.aimodel', '.aiprovider', '.aiproviders', '.aiapi', '.aiorder', '.aipause', '.airesume', '.aiquiet', '.ainever', '.aicontact', '.aiguard', '.aistatusreaction', '.aisetstatusreaction', '.dbstatus', '.aistatus', '.schedule'];
         const isOwnerCommand = ownerCommands.some(cmd => userMessage.startsWith(cmd));
 
         let isSenderAdmin = false;
@@ -811,7 +827,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 const match = userMessage.slice(8).trim();
                 await handleChatbotCommand(sock, chatId, message, match);
                 break;
-            case userMessage.startsWith('.aiutoreply') || userMessage.startsWith('.aireply') || userMessage.startsWith('.aistyle') || userMessage.startsWith('.aimemory') || userMessage.startsWith('.aisetkey') || userMessage.startsWith('.aikey') || userMessage.startsWith('.aisetmodel') || userMessage.startsWith('.aimodel'):
+            case userMessage.startsWith('.aiutoreply') || userMessage.startsWith('.aireply') || userMessage.startsWith('.aistyle') || userMessage.startsWith('.aimemory') || userMessage.startsWith('.aisetkey') || userMessage.startsWith('.aikey') || userMessage.startsWith('.aisetmodel') || userMessage.startsWith('.aimodel') || userMessage.startsWith('.aiprovider') || userMessage.startsWith('.aiproviders') || userMessage.startsWith('.aiapi') || userMessage.startsWith('.aiorder') || userMessage.startsWith('.aipause') || userMessage.startsWith('.airesume') || userMessage.startsWith('.aiquiet') || userMessage.startsWith('.ainever') || userMessage.startsWith('.aicontact') || userMessage.startsWith('.aiguard'):
                 await handleAiAutoReplyCommand(sock, chatId, message, rawText);
                 break;
             case userMessage.startsWith('.take') || userMessage.startsWith('.steal'):
@@ -877,6 +893,18 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 break;
             case userMessage === '.clearsession' || userMessage === '.clearsesi':
                 await clearSessionCommand(sock, chatId, message);
+                break;
+            case userMessage.startsWith('.aistatusreaction') || userMessage.startsWith('.aisetstatusreaction'):
+                await statusReactionCommand(sock, chatId, message, rawText);
+                break;
+            case userMessage === '.dbstatus':
+                await dbStatusCommand(sock, chatId, message);
+                break;
+            case userMessage === '.aistatus':
+                await aiStatusCommand(sock, chatId, message);
+                break;
+            case userMessage.startsWith('.schedule'):
+                await handleSchedule(sock, chatId, message);
                 break;
             case userMessage.startsWith('.autostatus'):
                 const autoStatusArgs = userMessage.split(' ').slice(1);

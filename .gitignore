@@ -6,6 +6,11 @@ package-lock.json
 data/aiMemory.json
 data/aiAutoReply.json
 data/aiUsage.json
+data/aiProviders.json
+data/aiContacts.json
+data/aiStyle.json
+data/aiControls.json
+data/schedules/
 data/webAccounts.json
 data/webSessions.json
 data/webAudit.log
@@ -17,6 +22,7 @@ temp/
 session/
 session-backup.txt
 baileys_store.json
+data/aiStyle.json.bak
 commit-msg.txt
 
 # Environment variables
