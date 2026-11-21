@@ -1,26 +1,56 @@
-const settings = require("../settings");
+const fs = require('fs');
+const path = require('path');
+const settings = require('../settings');
 const { channelInfo } = require('../lib/messageConfig');
-async function aliveCommand(sock, chatId, message) {
-    try {
-        const message1 = `*🤖 Lily MD is Active!*\n\n` +
-                       `*Version:* ${settings.version}\n` +
-                       `*AI Assistant:* ${settings.aiName || 'AYHA'}\n` +
-                       `*Status:* Online\n` +
-                       `*Mode:* Public\n\n` +
-                       `*🌟 Features:*\n` +
-                       `• Group Management\n` +
-                       `• Antilink Protection\n` +
-                       `• Fun Commands\n` +
-                       `• And more!\n\n` +
-                       `Type *.menu* for full command list`;
 
-        await sock.sendMessage(chatId, {
-            text: message1,
-            ...channelInfo
-        }, { quoted: message });
+async function aliveCommand(sock, chatId, message) {
+    const logoPath = path.join(process.cwd(), 'assets', 'bot_image.png');
+
+    const caption =
+        `╭───「 🌸 *LILY MD* 」───╮\n` +
+        `│\n` +
+        `│  ✨ *I'm online and ready!*\n` +
+        `│\n` +
+        `├─ *Version:* ${settings.version || 'Latest'}\n` +
+        `├─ *AI:* ${settings.aiName || 'AYHA'}\n` +
+        `├─ *Status:* Connected 🟢\n` +
+        `├─ *Mode:* Public\n` +
+        `│\n` +
+        `├─ *Features*\n` +
+        `│  ├ Group Management\n` +
+        `│  ├ Anti-link Protection\n` +
+        `│  ├ AI Assistant\n` +
+        `│  └ Fun & Utility Commands\n` +
+        `│\n` +
+        `╰───「 Type *.menu* 」───╯\n` +
+        `_Powered by Lily MD_`;
+
+    try {
+        if (fs.existsSync(logoPath)) {
+            await sock.sendMessage(
+                chatId,
+                {
+                    image: fs.readFileSync(logoPath),
+                    caption,
+                    ...channelInfo
+                },
+                { quoted: message }
+            );
+        } else {
+            await sock.sendMessage(
+                chatId,
+                { text: caption, ...channelInfo },
+                { quoted: message }
+            );
+        }
     } catch (error) {
-        console.error('Error in alive command:', error);
-        await sock.sendMessage(chatId, { text: 'Bot is alive and running!' }, { quoted: message });
+        console.error('Alive command error:', error);
+
+        await sock.sendMessage(
+            chatId,
+            { text: '🌸 *Lily MD is online!*', ...channelInfo },
+            { quoted: message }
+        );
     }
 }
 
