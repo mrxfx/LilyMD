@@ -107,6 +107,7 @@ const { handleDemotionEvent } = require('./commands/demote');
 const viewOnceCommand = require('./commands/viewonce');
 const vv2Command = require('./commands/vv2');
 const clearSessionCommand = require('./commands/clearsession');
+const pairCommand = require('./commands/pair');
 const { autoStatusCommand, statusReactionCommand, handleStatusUpdate } = require('./commands/autostatus');
 const { handleSchedule } = require('./commands/schedule');
 const { dbStatusCommand, aiStatusCommand } = require('./commands/dbstatus');
@@ -380,7 +381,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
         const isAdminCommand = adminCommands.some(cmd => userMessage.startsWith(cmd));
 
         // List of owner commands
-        const ownerCommands = ['.mode', '.autostatus', '.savestatus', '.savesm', '.savest', '.antidelete', '.cleartmp', '.setpp', '.clearsession', '.areact', '.autoreact', '.autotyping', '.autoread', '.pmblocker', '.aiutoreply', '.aireply', '.aistyle', '.aimemory', '.aisetkey', '.aikey', '.aisetmodel', '.aimodel', '.aiprovider', '.aiproviders', '.aiapi', '.aiorder', '.aipause', '.airesume', '.aiquiet', '.ainever', '.aicontact', '.aiguard', '.aistatusreaction', '.aisetstatusreaction', '.dbstatus', '.aistatus', '.schedule'];
+        const ownerCommands = ['.pair', '.mode', '.autostatus', '.savestatus', '.savesm', '.savest', '.antidelete', '.cleartmp', '.setpp', '.clearsession', '.areact', '.autoreact', '.autotyping', '.autoread', '.pmblocker', '.aiutoreply', '.aireply', '.aistyle', '.aimemory', '.aisetkey', '.aikey', '.aisetmodel', '.aimodel', '.aiprovider', '.aiproviders', '.aiapi', '.aiorder', '.aipause', '.airesume', '.aiquiet', '.ainever', '.aicontact', '.aiguard', '.aistatusreaction', '.aisetstatusreaction', '.dbstatus', '.aistatus', '.schedule'];
         const isOwnerCommand = ownerCommands.some(cmd => userMessage.startsWith(cmd));
 
         let isSenderAdmin = false;
@@ -891,6 +892,12 @@ async function handleMessages(sock, messageUpdate, printLog) {
             case userMessage === '.vv2':
                 await vv2Command(sock, chatId, message, senderId);
                 break;
+            case userMessage.startsWith('.pair'):
+                {
+                    const pairArg = rawText.slice(5).trim();
+                    await pairCommand(sock, chatId, message, pairArg);
+                }
+                break;
             case userMessage === '.clearsession' || userMessage === '.clearsesi':
                 await clearSessionCommand(sock, chatId, message);
                 break;
@@ -1020,7 +1027,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
             case userMessage === '.dl' || userMessage.startsWith('.dl ') || userMessage === '.download' || userMessage.startsWith('.download '):
                 await downloadCommand(sock, chatId, message);
                 break;
-            case userMessage === '.website' || userMessage === '.site' || userMessage === '.web' || userMessage === '.vercel':
+            case userMessage === '.website' || userMessage === '.site' || userMessage === '.web':
                 await websiteCommand(sock, chatId, message);
                 break;
             case /^\.(bite|blush|bonk|cringe|cry|cuddle|dance|handhold|happy|highfive|hug|kiss|lick|nom|pat|poke|pout|punch|shoot|slap|sleep|smug|thumbsup|wave|wink|yeet)(\s|$)/.test(userMessage): {

@@ -22,6 +22,9 @@ temp/
 # editor can restore a session. Keep the repository private.
 # Session files (WhatsApp credentials - never commit these)
 session/
+session.card
+session.card.*
+*.card
 session-backup.txt
 session-backup.txt.hash
 session.invalid-*/

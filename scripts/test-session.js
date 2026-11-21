@@ -18,7 +18,7 @@ const crypto = require('crypto');
 const WORK = fs.mkdtempSync(path.join(os.tmpdir(), 'lily-session-test-'));
 const SESSION_DIR = path.join(WORK, 'session');
 process.env.SESSION_DIR = SESSION_DIR;
-process.env.SESSION_BACKUP_FILE = path.join(WORK, 'session-backup.txt');
+process.env.SESSION_BACKUP_FILE = path.join(WORK, 'session.card');
 process.env.SESSION_BACKUP_DEBOUNCE_MS = '40';
 delete process.env.SESSION_ID;
 
@@ -108,7 +108,7 @@ async function run() {
         check('archive contains creds.json', String(entries.stdout).split(/\r?\n/).includes('./creds.json'));
 
         const first = backup.writeSessionBackup();
-        check('session-backup.txt written', first.ok === true && first.changed === true);
+        check('session.card written', first.ok === true && first.changed === true);
         check('backup file exists', fs.existsSync(process.env.SESSION_BACKUP_FILE));
         check('archive validates', backup.assertSafeEntries(entries.stdout.toString().split(/\r?\n/).filter(Boolean)).hasCreds === true);
     }
@@ -134,7 +134,8 @@ async function run() {
         check('credential change refreshed the backup', after !== before);
         const packed = backup.packSession();
         const state = backup.state();
-        check('state reports the new hash', state.lastBackupHash === crypto.createHash('sha256').update(packed).digest('hex'));
+        const packedHash = crypto.createHash('sha256').update(packed).digest('hex');
+        check('state reports the new hash', state.lastBackupHash === packedHash, `state=${state.lastBackupHash} vs packed=${packedHash}`);
     }
 
     section('Restore from SESSION_ID');
@@ -174,6 +175,8 @@ async function run() {
 
     section('SESSION_ID validation');
     {
+        const savedCard = process.env.SESSION_BACKUP_FILE;
+        if (savedCard && fs.existsSync(savedCard)) fs.renameSync(savedCard, savedCard + '.bak');
         delete process.env.SESSION_ID;
         removeDir(SESSION_DIR);
         const invalid = backup.restoreSessionFromEnv({ log: { log: () => {}, error: () => {} } });
@@ -203,6 +206,7 @@ async function run() {
         check('absolute path entry is rejected', backup.restoreSessionFromEnv({ log: { log: () => {}, error: () => {} } }).reason === 'invalid');
 
         check('data: prefix and whitespace are tolerated', backup.normaliseSessionId(`data:application/octet-stream;base64, ${Buffer.from('abc').toString('base64')}\n`) === Buffer.from('abc').toString('base64'));
+        if (savedCard && fs.existsSync(savedCard + '.bak')) fs.renameSync(savedCard + '.bak', savedCard);
     }
 
     section('SESSION_ID.txt fallback');
@@ -267,7 +271,7 @@ async function run() {
         const first = await backup.sendSessionBackup(sock);
         check('backup document is sent', first.ok === true && sent.length === 1);
         check('sent to the bot account only', sent[0].jid === '916033352400@s.whatsapp.net');
-        check('document filename', sent[0].content.fileName === 'LILY-MD-SESSION.txt');
+        check('document filename', sent[0].content.fileName === 'session.card');
         const doc = sent[0].content.document.toString('utf8');
         check('document explains restoration', doc.includes('SESSION_ID') && doc.includes('HOW TO RESTORE ON A NEW SERVER'));
         check('document carries the archive', doc.includes(fs.readFileSync(process.env.SESSION_BACKUP_FILE, 'utf8').trim()));
@@ -335,6 +339,60 @@ async function run() {
         check('pair command still uses the local pairing engine', source.includes('startPairing'));
         check('index restores the session before Baileys starts', /restoreSessionFromEnv\(\)[\s\S]{0,400}useMultiFileAuthState/.test(fs.readFileSync(path.join(__dirname, '..', 'index.js'), 'utf8')));
         check('index starts the scheduler through the module', /scheduler\.start\(/.test(fs.readFileSync(path.join(__dirname, '..', 'index.js'), 'utf8')));
+    }
+
+    section('session.card restoration & restart persistence');
+    {
+        delete process.env.SESSION_ID;
+        delete process.env.SESSION_ID_FILE;
+        // 1. Ensure valid local session is backed up to session.card
+        removeDir(SESSION_DIR);
+        writeLocalSession(SESSION_DIR, 'persistence-test-val');
+        const backupRes = backup.writeSessionBackup({ force: true });
+        check('session.card created atomically', backupRes.ok === true);
+        check('session.card file exists', fs.existsSync(process.env.SESSION_BACKUP_FILE));
+
+        // 2. Wipe the session directory (simulating container restart / wipe)
+        removeDir(SESSION_DIR);
+        check('session directory is wiped', fs.existsSync(SESSION_DIR) === false);
+
+        // 3. Restore session from session.card
+        const restoreRes = backup.restoreSessionFromEnv({ log: { log: () => {}, error: () => {} } });
+        check('restored from session.card successfully', restoreRes.restored === true);
+        check('restore source reports session.card', restoreRes.source === 'session.card');
+        check('creds.json restored', fs.existsSync(path.join(SESSION_DIR, 'creds.json')));
+        const restoredCreds = JSON.parse(fs.readFileSync(path.join(SESSION_DIR, 'creds.json'), 'utf8'));
+        check('restored credentials match original', restoredCreds.marker === 'persistence-test-val');
+
+        // 4. Second boot preserves existing session without re-extracting
+        const secondBoot = backup.restoreSessionFromEnv({ log: { log: () => {}, error: () => {} } });
+        check('restart persistence detects existing session', secondBoot.restored === false && secondBoot.reason === 'existing');
+    }
+
+    section('Shorter and custom pairing code');
+    {
+        const code1 = backup.generatePairingCode();
+        check('pairing code starts with LilyMd~', code1.startsWith('LilyMd~'));
+        check('pairing code has 15-char random suffix', /^LilyMd~[2-9A-Z]{15}$/.test(code1), code1);
+
+        // Test uniqueness across 200 iterations
+        const generated = new Set();
+        for (let i = 0; i < 200; i++) {
+            generated.add(backup.generatePairingCode());
+        }
+        check('pairing codes are unique and cryptographically generated', generated.size === 200);
+    }
+
+    section('Pairing completion message security');
+    {
+        const pairSource = fs.readFileSync(path.join(__dirname, '..', 'commands', 'pair.js'), 'utf8');
+        check('pair command sends confirmation message', pairSource.includes('Lily MD Connected Successfully.'));
+        check('pair command confirms session saved securely', pairSource.includes('Your WhatsApp session is now saved securely.'));
+        check('pair command never sends raw SESSION_ID to chat', !pairSource.includes('${sessionId}'));
+        check('pair command never sends lily-md-session TXT file', !pairSource.includes('lily-md-session-'));
+
+        const indexSource = fs.readFileSync(path.join(__dirname, '..', 'index.js'), 'utf8');
+        check('index on connect sends secure confirmation without credentials', indexSource.includes('Lily MD Connected Successfully.'));
     }
 }
 

@@ -24,8 +24,7 @@ in a serverless function.
 ### Fixes
 
 1. **JSON-safe client** — `web/public/app.js` reads `content-type` and status first,
-   and raises readable errors ("This address does not host the Lily MD API (HTTP 404).
-   If the website is on Vercel, point it at your bot…"). All three pages use it.
+   and raises readable errors ("This address does not host the Lily MD API (HTTP 404). Check Server Settings or ensure the website service is running."). All three pages use it.
 2. **Configurable backend** — `window.LILY_CONFIG.backendUrl`, a saved `localStorage`
    value, or the "Server settings" field on the pairing page. The bot serves a
    generated `/config.js` with `BACKEND_API_URL`.

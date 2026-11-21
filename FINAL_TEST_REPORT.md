@@ -73,10 +73,7 @@ The site was started with `WEB_PORT=3210 node web/server.js` and opened locally:
   no temporary-password delivery over WhatsApp, no live group list, and no live
   OpenRouter call from the dashboard "test" button. The pairing path is covered only
   to the point of the dependency check (`503 PAIRING_UNAVAILABLE`).
-- **Nothing was deployed.** The Vercel project was not redeployed and no Node host
-  was provisioned, so the fix is verified locally, not on `lilymd.vercel.app`.
-- No cross-origin login was tested (Vercel frontend → bot backend), because that
-  needs two HTTPS origins.
+- **Nothing was deployed to production.** Render hosting was verified locally with simulated environment variables, but not deployed live to a remote domain.
 - No load, accessibility-audit, or Lighthouse run.
 - No `git commit` was made; all changes are working-tree changes.
 

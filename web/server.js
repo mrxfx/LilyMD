@@ -9,6 +9,8 @@
  * which is the 2-in-1 mode: one process runs WhatsApp and the website together.
  * Use this entry point only when you want the site without the bot.
  */
+const fs = require('fs');
+const path = require('path');
 const http = require('http');
 const { handleRequest, closeJobs } = require('../lib/webApp');
 
@@ -16,7 +18,17 @@ try {
     require('dotenv').config();
 } catch {}
 
-const PORT = Number(process.env.WEB_PORT || 3000);
+// Ensure local state directory exists on startup
+try {
+    fs.mkdirSync(path.join(process.cwd(), 'data'), { recursive: true });
+} catch {}
+
+const rawPort = process.env.PORT || process.env.WEB_PORT;
+let PORT = Number(rawPort);
+if (isNaN(PORT) || PORT <= 0 || PORT > 65535) {
+    PORT = 3000;
+}
+const HOST = process.env.HOST || '0.0.0.0';
 const BOT_NAME = process.env.BOT_NAME || 'Lily MD';
 
 const server = http.createServer(async (req, res) => {
@@ -25,9 +37,10 @@ const server = http.createServer(async (req, res) => {
     res.end(JSON.stringify({ error: 'not found' }));
 });
 
-server.listen(PORT, () => {
-    console.log(`🌐 ${BOT_NAME} pairing site: http://localhost:${PORT}`);
-    console.log(`   Set WEB_PORT (currently ${PORT}) to change the port.`);
+server.listen(PORT, HOST, () => {
+    console.log(`🌐 [Render/Web] ${BOT_NAME} website running at http://${HOST}:${PORT}`);
+    console.log(`   Health check endpoint: http://${HOST}:${PORT}/health`);
+    console.log(`   Node: ${process.version} | Platform: ${process.platform} | PID: ${process.pid}`);
 });
 
 function shutdown() {

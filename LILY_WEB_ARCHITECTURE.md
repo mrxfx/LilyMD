@@ -55,17 +55,11 @@ pairing opens its own temporary Baileys session.
 
 All are gitignored.
 
-## Vercel
+## Render Web Service
 
-Vercel cannot hold a Baileys socket: the function would be frozen mid-handshake, so
-pairing codes and the dashboard session would die. The Vercel deployment is therefore
-**frontend only** and must point at the running bot:
+The website is hosted on Render as a dedicated Node.js Web Service:
 
-1. Deploy the bot somewhere that keeps a process alive (Railway, Render, Fly, a VPS).
-2. Open the site from the bot host — pairing and login work on that origin.
-3. If you keep the Vercel copy, open **Server settings** on the pairing page (or the
-   login page) and paste the bot URL. It is stored in `localStorage` and every
-   request is sent there. Set `WEBSITE_URL` on the bot so CORS accepts that origin.
-
-Cross-site cookies need HTTPS on both sides (`SameSite=None; Secure`), so use the
-dashboard on the bot's own origin unless both are HTTPS.
+1. **Independent Process**: Runs `npm run website` (`web/server.js`), serving both static frontend assets and backend APIs.
+2. **Real Node.js Runtime**: Long-running requests, Server-Sent Events, and ephemeral Baileys pairing sockets are fully supported.
+3. **No External Proxy**: The website operates independently and does not require Vercel or any OptikLink proxy.
+4. **Health Monitoring**: Render automatically probes `/health` to ensure service availability.

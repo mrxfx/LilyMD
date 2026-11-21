@@ -3,350 +3,240 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<meta name="theme-color" content="#0a0b0d" />
-<title>Lily MD — WhatsApp linked-device platform</title>
-<meta name="description" content="Lily MD pairs your WhatsApp, answers private chats through AYHA, and gives owners a private console for every switch." />
+<meta name="theme-color" content="#07050e" />
+<title>Lily MD — WhatsApp Automation & Linked-Device Platform</title>
+<meta name="description" content="Lily MD connects your WhatsApp with dual pairing (Phone Code & QR Code), answers private chats through AYHA AI, and provides a secure owner dashboard." />
 <link rel="icon" href="assets/logo.png" />
 <link rel="stylesheet" href="theme.css" />
 <style>
-  /* ---------------------------------------------------------- page frame */
-
+  /* ---------------------------------------------------------- page header */
   .site-head {
     position: sticky;
     top: 0;
-    z-index: 30;
-    border-bottom: 1px solid var(--line-soft);
-    background: rgba(10, 11, 13, .68);
-    -webkit-backdrop-filter: blur(18px) saturate(115%);
-    backdrop-filter: blur(18px) saturate(115%);
+    z-index: 40;
+    border-bottom: 1px solid var(--line);
+    background: rgba(10, 6, 20, .82);
+    -webkit-backdrop-filter: blur(24px) saturate(135%);
+    backdrop-filter: blur(24px) saturate(135%);
+    box-shadow: 0 4px 25px rgba(0, 0, 0, .6);
   }
   .head-inner {
     display: flex;
     align-items: center;
-    gap: 22px;
-    height: 66px;
+    gap: 20px;
+    height: 72px;
   }
-  .wordmark { display: flex; align-items: center; gap: 11px; }
+  .wordmark { display: flex; align-items: center; gap: 12px; }
   .wordmark img {
-    width: 34px; height: 34px; border-radius: 9px;
-    object-fit: cover; border: 1px solid var(--line);
+    width: 38px; height: 38px; border-radius: 50%;
+    object-fit: cover; border: 2px solid var(--accent);
+    box-shadow: 0 0 16px rgba(168, 85, 247, .55);
   }
   .wordmark strong {
-    display: block; font-size: 15px; font-weight: 600; letter-spacing: -.01em;
+    display: block; font-size: 15px; font-weight: 700; letter-spacing: -.01em; color: #fff;
   }
   .wordmark em {
     display: block; font-style: normal; font-size: 9.5px;
-    letter-spacing: .18em; text-transform: uppercase; color: var(--faint);
+    letter-spacing: .18em; text-transform: uppercase; color: var(--accent-magenta);
     margin-top: 1px;
+    font-weight: 600;
   }
   .site-nav {
-    display: flex; align-items: center; gap: 4px;
+    display: flex; align-items: center; gap: 6px;
     margin-left: auto;
   }
   .site-nav a {
-    padding: 7px 11px; border-radius: 8px;
-    color: var(--muted); font-size: 13.5px;
-    transition: color .15s ease, background .15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px; border-radius: var(--radius-pill);
+    color: var(--muted); font-size: 13.5px; font-weight: 600;
+    transition: all .18s ease;
   }
-  .site-nav a:hover { color: var(--text); background: rgba(255, 255, 255, .045); }
-  .head-actions { display: flex; align-items: center; gap: 8px; }
+  .site-nav a:hover {
+    color: #fff;
+    background: rgba(168, 85, 247, .14);
+    box-shadow: 0 0 12px rgba(168, 85, 247, .25);
+  }
+  .site-nav a .icon { width: 14px; height: 14px; opacity: .85; }
+  .head-actions { display: flex; align-items: center; gap: 10px; }
 
   /* ---------------------------------------------------------- hero */
-
   .hero {
     display: grid;
-    grid-template-columns: minmax(0, 1.02fr) minmax(0, .98fr);
-    gap: clamp(36px, 6vw, 84px);
-    align-items: center;
-    padding: clamp(48px, 7vw, 92px) 0 clamp(56px, 8vw, 104px);
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr);
+    gap: clamp(36px, 6vw, 76px);
+    align-items: start;
+    padding: clamp(48px, 7vw, 84px) 0 clamp(56px, 8vw, 96px);
     scroll-margin-top: 84px;
   }
   .hero h1 {
-    font-size: clamp(38px, 4.5vw, 62px);
-    margin: 22px 0 22px;
+    font-size: clamp(38px, 4.4vw, 58px);
+    margin: 18px 0 20px;
+    line-height: 1.12;
   }
-  .hero .lede { max-width: 47ch; margin: 0; }
-  .hero-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 30px; }
-  .hero-actions .btn { padding: 13px 21px; }
+  .hero .lede { max-width: 48ch; margin: 0; font-size: 15.5px; line-height: 1.65; color: var(--text-2); }
+  .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 28px; }
 
   .stat-strip {
-    display: flex; gap: 0; margin: 40px 0 0;
+    display: flex; gap: 0; margin: 38px 0 0;
     border-top: 1px solid var(--line-soft);
     padding-top: 22px;
   }
-  .stat-strip div { padding-right: 34px; margin-right: 34px; border-right: 1px solid var(--line-soft); }
+  .stat-strip div { padding-right: 30px; margin-right: 30px; border-right: 1px solid var(--line-soft); }
   .stat-strip div:last-child { border-right: 0; margin-right: 0; padding-right: 0; }
   .stat-strip dt {
-    font-family: var(--serif); font-size: 23px; line-height: 1;
-    color: var(--text); margin: 0 0 6px;
+    font-family: var(--serif); font-size: 24px; line-height: 1;
+    color: #ffffff; margin: 0 0 6px; font-weight: 700;
+    text-shadow: 0 0 12px rgba(192, 132, 252, .4);
   }
   .stat-strip dd {
     margin: 0; font-size: 10.5px; letter-spacing: .16em;
-    text-transform: uppercase; color: var(--faint);
+    text-transform: uppercase; color: var(--text-3); font-weight: 600;
   }
 
-  /* ---------------------------------------------------------- pairing */
-
+  /* ---------------------------------------------------------- pairing aside */
   .pair-card {
-    padding: 26px 26px 24px;
-    border-radius: 20px;
+    padding: 28px 28px 26px;
+    border-radius: 24px;
+    background: linear-gradient(135deg, rgba(22, 14, 44, .78) 0%, rgba(14, 8, 28, .68) 100%);
+    border: 1px solid var(--line-strong);
+    box-shadow: var(--shadow-lg), 0 0 35px rgba(168, 85, 247, .22);
   }
   .pair-head {
     display: flex; align-items: baseline; justify-content: space-between;
-    gap: 14px; padding-bottom: 16px; margin-bottom: 20px;
+    gap: 14px; padding-bottom: 14px; margin-bottom: 18px;
     border-bottom: 1px solid var(--line-soft);
   }
-  .pair-head h2 { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -.01em; }
-  .pair-head .step-index { font-family: var(--mono); font-size: 11.5px; color: var(--faint); }
-  .pair-card .sub { margin: 0 0 18px; color: var(--muted); font-size: 13.5px; line-height: 1.6; }
+  .pair-head h2 { margin: 0; font-size: 17px; font-weight: 700; letter-spacing: -.01em; color: #fff; }
+  .pair-head .step-index { font-family: var(--mono); font-size: 11.5px; color: var(--accent); font-weight: 700; }
+  .pair-card .sub { margin: 0 0 16px; color: var(--muted); font-size: 13.5px; line-height: 1.55; }
 
-  .input-row { display: flex; gap: 9px; align-items: stretch; }
-  .input-row input { flex: 1 1 190px; min-width: 0; }
-  .input-row .btn { flex: none; }
-
-  .msg {
-    margin: 12px 0 0; padding: 11px 13px; border-radius: 9px;
-    font-size: 13px; display: none;
-    border: 1px solid var(--line); border-left-width: 2px;
-    background: rgba(255, 255, 255, .035); color: var(--text-2);
-  }
-  .msg.show { display: block; }
-  .msg.error { border-left-color: var(--danger); color: #efc8c3; }
-  .msg.info { border-left-color: rgba(196, 214, 230, .5); color: var(--text-2); }
-
-  .step { display: none; }
-  .step.on { display: block; animation: reveal .28s ease; }
-  @keyframes reveal { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
-
-  .code-box {
-    margin: 16px 0 10px;
-    padding: 22px 14px;
-    text-align: center;
-    border: 1px dashed rgba(255, 255, 255, .18);
-    border-radius: 13px;
-    background: rgba(255, 255, 255, .028);
-    font: 600 clamp(26px, 5vw, 32px)/1.15 var(--mono);
-    letter-spacing: .16em;
-    color: #fff;
-    word-break: break-all;
-  }
-  .timer { text-align: center; color: var(--faint); font-size: 12px; margin-bottom: 18px; letter-spacing: .02em; }
-
-  .steps-list {
-    counter-reset: step;
-    list-style: none;
-    padding: 0;
-    margin: 0 0 18px;
-    font-size: 13.5px;
-    color: var(--text-2);
-  }
-  .steps-list li {
-    counter-increment: step;
+  .code-display-wrap {
     position: relative;
-    padding: 7px 0 7px 30px;
-    border-top: 1px solid var(--line-soft);
+    margin: 16px 0 14px;
   }
-  .steps-list li:first-child { border-top: 0; }
-  .steps-list li::before {
-    content: counter(step);
-    position: absolute; left: 0; top: 8px;
-    width: 19px; height: 19px;
-    display: grid; place-items: center;
-    border: 1px solid var(--line); border-radius: 5px;
-    font-family: var(--mono); font-size: 10px; color: var(--muted);
+  .code-box {
+    padding: 16px 20px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--line-strong);
+    background: rgba(8, 4, 18, .85);
+    font-family: var(--mono);
+    font-size: clamp(24px, 3.8vw, 32px);
+    font-weight: 700;
+    letter-spacing: .22em;
+    text-align: center;
+    color: #ffffff;
+    text-shadow: 0 0 14px rgba(192, 132, 252, .6);
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, .8), 0 0 20px rgba(168, 85, 247, .2);
   }
-  .steps-list code { color: var(--text); }
+  .copy-code-btn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
 
   .state-row {
-    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
-    font-size: 12px; color: var(--faint); margin-top: 16px;
+    display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
+    font-size: 11.5px; color: var(--muted); margin-top: 16px;
+    padding-top: 14px; border-top: 1px solid var(--line-soft);
   }
   .state-chip {
-    padding: 3px 9px; border-radius: 6px;
-    border: 1px solid var(--line-soft);
-    color: var(--faint); font-size: 11px; letter-spacing: .04em;
+    padding: 3px 8px; border-radius: 6px;
+    border: 1px solid var(--line-soft); font-family: var(--mono);
+    color: var(--faint); font-size: 10.5px;
+    transition: all .15s ease;
   }
-  .state-chip.active { color: var(--text); border-color: var(--line-strong); background: rgba(255, 255, 255, .06); }
+  .state-chip.active {
+    color: #ffffff; border-color: var(--accent);
+    background: rgba(168, 85, 247, .25);
+    box-shadow: 0 0 10px rgba(168, 85, 247, .4);
+  }
 
-  .pair-card textarea {
-    min-height: 92px; resize: vertical;
-    font: 11.5px/1.5 var(--mono);
-    word-break: break-all; padding: 11px;
+  .msg {
+    margin: 12px 0 0; padding: 10px 14px; border-radius: 8px;
+    font-size: 13px; display: none;
+    border: 1px solid var(--line); border-left-width: 3px;
+    background: rgba(18, 11, 35, .7); color: var(--text-2);
   }
+  .msg.show { display: block; }
+  .msg.error { border-left-color: var(--danger); color: #fecaca; background: rgba(248, 113, 113, .12); }
+  .msg.info { border-left-color: var(--accent); color: var(--text); background: rgba(168, 85, 247, .12); }
+  .msg.success { border-left-color: var(--ok); color: #d1fae5; background: rgba(52, 211, 153, .12); }
+
+  .step { display: none; }
+  .step.on { display: block; animation: reveal .22s ease-out; }
+  @keyframes reveal { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
   .pair-foot {
-    margin: 20px 0 0; padding-top: 15px;
-    border-top: 1px solid var(--line-soft);
-    color: var(--faint); font-size: 11.5px; line-height: 1.6;
+    margin: 18px 0 0; font-size: 11.5px; color: var(--faint);
+    line-height: 1.6; border-top: 1px solid var(--line-soft);
+    padding-top: 14px;
   }
 
-  details.backend {
-    margin-top: 16px; padding-top: 13px;
-    border-top: 1px solid var(--line-soft);
-    font-size: 12.5px; color: var(--muted);
+  /* ---------------------------------------------------------- blocks */
+  .block { padding: clamp(48px, 6vw, 84px) 0; border-top: 1px solid var(--line-soft); scroll-margin-top: 72px; }
+  .block-head {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .85fr);
+    gap: 32px; align-items: end; margin-bottom: 34px;
   }
-  details.backend summary { cursor: pointer; color: var(--text-2); }
-  details.backend summary::marker { color: var(--faint); }
-  details.backend .input-row { margin-top: 10px; }
-
-  .spinner {
-    display: inline-block; width: 13px; height: 13px;
-    margin-right: 7px; vertical-align: -2px;
-    border: 1.5px solid currentColor; border-top-color: transparent;
-    border-radius: 50%; animation: spin .8s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* ---------------------------------------------------------- sections */
-
-  .block { padding: clamp(44px, 6vw, 78px) 0; border-top: 1px solid var(--line-soft); }
-  .block-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .9fr); gap: 30px; align-items: end; margin-bottom: 34px; }
-  .block-head h2 { font-size: clamp(24px, 3vw, 34px); margin: 14px 0 0; }
-  .block-head p { margin: 0; }
-
-  .feature-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1px;
-    border: 1px solid var(--line-soft);
-    border-radius: var(--radius);
-    overflow: hidden;
-    background: var(--line-soft);
-  }
-  .feature {
-    padding: 26px 24px 28px;
-    background: rgba(14, 16, 19, .55);
-    -webkit-backdrop-filter: blur(14px);
-    backdrop-filter: blur(14px);
-  }
-  .feature .icon-box {
-    width: 34px; height: 34px; margin-bottom: 16px;
-    display: grid; place-items: center;
-    border: 1px solid var(--line); border-radius: 9px;
-    background: rgba(255, 255, 255, .04);
-    color: var(--text-2);
-  }
-  .feature h3 { margin: 0 0 7px; font-size: 15px; font-weight: 600; letter-spacing: -.005em; }
-  .feature p { margin: 0; color: var(--muted); font-size: 13.5px; line-height: 1.62; }
-
-  /* ---------------------------------------------------------- ayha */
-
-  .ai-band {
-    display: grid;
-    grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr);
-    gap: clamp(26px, 5vw, 60px);
-    padding: clamp(26px, 4vw, 42px);
-    align-items: center;
-    border-radius: 20px;
-  }
-  .ai-band h2 { font-size: clamp(22px, 2.8vw, 30px); margin: 14px 0 14px; }
-  .ai-band p { color: var(--muted); margin: 0 0 16px; font-size: 14px; }
-  .ai-band code {
-    font-family: var(--mono); font-size: 12.5px;
-    padding: 2px 6px; border: 1px solid var(--line);
-    border-radius: 5px; color: var(--text-2);
-  }
-  .language-line {
-    display: flex; gap: 14px; flex-wrap: wrap;
-    font-size: 12px; letter-spacing: .04em; color: var(--faint);
-    padding: 14px 0 18px; margin: 0 0 4px;
-    border-top: 1px solid var(--line-soft);
-  }
-
-  .chat { display: grid; gap: 9px; }
-  .chat-time {
-    text-align: center; font-size: 10px; letter-spacing: .16em;
-    text-transform: uppercase; color: var(--faint); margin-bottom: 3px;
-  }
-  .bubble {
-    max-width: 86%; padding: 10px 14px;
-    border-radius: 13px; font-size: 13.5px; line-height: 1.5;
-    border: 1px solid var(--line-soft);
-  }
-  .bubble.them {
-    background: rgba(255, 255, 255, .05);
-    border-bottom-left-radius: 4px; color: var(--text-2);
-  }
-  .bubble.bot {
-    margin-left: auto;
-    background: rgba(255, 255, 255, .085);
-    border-color: var(--line);
-    border-bottom-right-radius: 4px; color: var(--text);
-  }
-
-  /* ---------------------------------------------------------- security */
-
-  .security-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 14px;
-  }
-  .security-card {
-    padding: 22px;
-    border: 1px solid var(--line-soft);
-    border-radius: var(--radius-sm);
-    background: rgba(255, 255, 255, .026);
-  }
-  .security-card .ico-row {
-    display: flex; align-items: center; gap: 9px;
-    color: var(--muted); margin-bottom: 12px;
-  }
-  .security-card h3 { margin: 0 0 6px; font-size: 14px; font-weight: 600; }
-  .security-card p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+  .block-head h2 { font-size: clamp(24px, 3.2vw, 36px); margin: 12px 0 0; line-height: 1.2; }
+  .block-head p { margin: 0; color: var(--muted); font-size: 14.5px; line-height: 1.6; }
 
   /* ---------------------------------------------------------- footer */
-
   .site-foot {
     border-top: 1px solid var(--line-soft);
-    padding: 36px 0 48px;
-    margin-top: 10px;
+    padding: 38px 0 48px;
   }
   .foot-inner {
     display: flex; justify-content: space-between; align-items: flex-start;
     gap: 30px; flex-wrap: wrap;
   }
-  .foot-brand strong { display: block; font-size: 14px; margin-bottom: 5px; }
+  .foot-brand strong { display: block; font-size: 14.5px; margin-bottom: 5px; }
   .foot-brand p { margin: 0; color: var(--faint); font-size: 12.5px; line-height: 1.7; }
   .foot-links { display: flex; gap: 20px; flex-wrap: wrap; }
   .foot-links a {
     display: inline-flex; align-items: center; gap: 6px;
-    color: var(--muted); font-size: 12.5px;
+    color: var(--muted); font-size: 13px;
   }
   .foot-links a:hover { color: var(--text); }
 
   /* ---------------------------------------------------------- responsive */
-
   @media (max-width: 980px) {
     .hero { grid-template-columns: minmax(0, 1fr); gap: 40px; }
-    .block-head { grid-template-columns: minmax(0, 1fr); gap: 12px; align-items: start; }
-    .ai-band { grid-template-columns: minmax(0, 1fr); }
+    .block-head { grid-template-columns: minmax(0, 1fr); gap: 12px; }
     .site-nav { display: none; }
   }
-  @media (max-width: 620px) {
-    .head-inner { height: 60px; gap: 12px; }
-    .head-actions .btn.ghost { display: none; }
-    .stat-strip div { padding-right: 20px; margin-right: 20px; }
-    .pair-card { padding: 22px 18px; }
-    .input-row { flex-direction: column; }
-    .input-row .btn { width: 100%; }
-    .hero-actions .btn { flex: 1 1 auto; }
+  @media (max-width: 640px) {
+    .phone-select-wrap { grid-template-columns: 1fr; }
+    .hero-actions .btn { width: 100%; justify-content: center; }
+    .pair-card { padding: 20px 16px; }
   }
 </style>
 </head>
 <body>
 
+<!-- SVG Icon Sprite (Proper scalable icons — zero emoji icons) -->
 <svg class="sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
-  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.5 8.9 8.9 0 0 1-3.8-.9L3.5 21l1.4-5.2A8.5 8.5 0 1 1 21 11.5Z"/></symbol>
-  <symbol id="i-voice" viewBox="0 0 24 24"><path d="M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4"/></symbol>
+  <symbol id="i-qr" viewBox="0 0 24 24"><path d="M3 3h6v6H3V3Zm2 2v2h2V5H5Zm8-2h6v6h-6V3Zm2 2v2h2V5h-2ZM3 15h6v6H3v-6Zm2 2v2h2v-2H5Zm10 0h2v2h-2v-2Zm2-2h2v2h-2v-2Zm-4 4h2v2h-2v-2Zm4 0h2v2h-2v-2Zm0-6h2v2h-2v-2Zm-4 2h2v2h-2v-2Zm-2-2h2v2h-2v-2Z"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="3"/><path d="M12 18h.01"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></symbol>
+  <symbol id="i-terminal" viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></symbol>
+  <symbol id="i-cpu" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/></symbol>
   <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4.4-3 8.2-7 9-4-.8-7-4.6-7-9V6l7-3Z"/></symbol>
-  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v10m0 0 4-4m-4 4-4-4M5 19h14"/></symbol>
   <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4.5" y="10" width="15" height="10" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></symbol>
   <symbol id="i-activity" viewBox="0 0 24 24"><path d="M3 12h4l3-7 4 14 3-7h4"/></symbol>
-  <symbol id="i-hash" viewBox="0 0 24 24"><path d="M9 3 7 21M17 3l-2 18M4 9h17M3 15h17"/></symbol>
-  <symbol id="i-fingerprint" viewBox="0 0 24 24"><path d="M12 4a8 8 0 0 0-8 8v2M12 8a4 4 0 0 0-4 4v4M16 12a4 4 0 0 1 4 4M12 12v6M20 6a11 11 0 0 0-16 0"/></symbol>
-  <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z"/><path d="M9 8h6M9 12h6"/></symbol>
+  <symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v10m0 0 4-4m-4 4-4-4M5 19h14"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-8.5 8.5 8.9 8.9 0 0 1-3.8-.9L3.5 21l1.4-5.2A8.5 8.5 0 1 1 21 11.5Z"/></symbol>
+  <symbol id="i-voice" viewBox="0 0 24 24"><path d="M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4"/></symbol>
   <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8"/></symbol>
-  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
-  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></symbol>
 </svg>
 
 <header class="site-head">
@@ -355,204 +245,451 @@
       <img src="assets/logo.png" alt="Lily MD" onerror="this.style.visibility='hidden'" />
       <span class="wordmark-text"><strong>Lily MD</strong><em>WhatsApp automation</em></span>
     </a>
-    <nav class="site-nav" aria-label="Sections">
-      <a href="#capabilities">Capabilities</a>
-      <a href="#ayha">AYHA</a>
-      <a href="#security">Security</a>
+    <nav class="site-nav" aria-label="Main Navigation">
+      <a href="#pairing"><svg class="icon" aria-hidden="true"><use href="#i-phone"/></svg>Pairing</a>
+      <a href="#commands"><svg class="icon" aria-hidden="true"><use href="#i-terminal"/></svg>Commands</a>
+      <a href="#status"><svg class="icon" aria-hidden="true"><use href="#i-activity"/></svg>Live Status</a>
+      <a href="#capabilities"><svg class="icon" aria-hidden="true"><use href="#i-cpu"/></svg>Features</a>
+      <a href="#help"><svg class="icon" aria-hidden="true"><use href="#i-globe"/></svg>Help</a>
     </nav>
     <div class="head-actions">
-      <a class="btn ghost small" href="login">Owner login</a>
-      <a class="btn small" href="#pair">Pair a number</a>
+      <a class="btn ghost small" href="login"><svg class="icon sm" aria-hidden="true"><use href="#i-lock"/></svg>Owner Login</a>
+      <a class="btn small" href="#pairing"><svg class="icon sm" aria-hidden="true"><use href="#i-phone"/></svg>Pair Device</a>
     </div>
   </div>
 </header>
 
 <main>
-  <section class="hero shell" id="pair">
+  <!-- Hero Section -->
+  <section class="hero shell" id="pairing">
     <div class="hero-copy">
-      <p class="eyebrow"><span class="mark"></span>Linked-device platform</p>
-      <h1 class="display">Your WhatsApp,<br />kept in <em>your</em> hands.</h1>
+      <div class="mascot-showcase">
+        <div class="mascot-avatar-wrap">
+          <img class="mascot-avatar" src="assets/logo.png" alt="Lily MD Mascot" />
+          <div class="mascot-ring-glow"></div>
+        </div>
+        <div>
+          <span class="mascot-tag"><svg class="icon sm" aria-hidden="true"><use href="#i-cpu"/></svg>WhatsApp MD Bot</span>
+          <div style="font-weight:700; font-size:18px; color:#ffffff; margin-top:2px">Lily MD Official</div>
+          <div style="font-size:12.5px; color:var(--text-2)">Anime Cyberpunk Automation • Powered by AYHA AI</div>
+        </div>
+      </div>
+
+      <p class="eyebrow"><span class="mark"></span>Linked-Device WhatsApp Platform</p>
+      <h1 class="display">Smart WhatsApp automation,<br />kept completely <em>private</em>.</h1>
       <p class="lede">
-        Lily MD links a number in under a minute, answers private chats in your own voice through AYHA,
-        and puts every switch in a private owner console. No terminal, no mock panels.
+        Link your WhatsApp account seamlessly with phone pairing code or instant QR scan.
+        Powered by the AYHA AI assistant with smart tone mirroring, multi-provider failover, and a private owner console.
       </p>
       <div class="hero-actions">
-        <a class="btn" href="#pair">Pair a number</a>
-        <a class="btn ghost" href="login">Open dashboard</a>
+        <a class="btn" href="#pairing"><svg class="icon sm" aria-hidden="true"><use href="#i-phone"/></svg>Pair With Code</a>
+        <button class="btn ghost" id="hero-qr-btn"><svg class="icon sm" aria-hidden="true"><use href="#i-qr"/></svg>Scan QR Code</button>
       </div>
-      <dl class="stat-strip">
-        <div><dt>150+</dt><dd>Commands</dd></div>
-        <div><dt>05</dt><dd>Languages</dd></div>
-        <div><dt>24/7</dt><dd>Auto-reply</dd></div>
-      </dl>
+
+      <div class="stat-strip">
+        <div>
+          <dt id="stat-connected">—</dt>
+          <dd>WhatsApp State</dd>
+        </div>
+        <div>
+          <dt id="stat-ai">AYHA</dt>
+          <dd>AI Assistant</dd>
+        </div>
+        <div>
+          <dt id="stat-commands">100+</dt>
+          <dd>Bot Commands</dd>
+        </div>
+      </div>
     </div>
 
-    <aside class="glass pair-card" aria-label="Pair a WhatsApp number">
-      <div class="pair-head">
-        <h2>Link a device</h2>
-        <span class="step-index">01 / 03</span>
+    <!-- Advanced Dual-Mode Pairing Card -->
+    <aside class="glass pair-card" aria-label="Pairing controls">
+      <!-- Dual Tab Switcher -->
+      <div class="pair-tabs" role="tablist">
+        <button class="pair-tab active" id="tab-phone" role="tab" aria-selected="true" aria-controls="pane-phone">
+          <svg class="icon" aria-hidden="true"><use href="#i-phone"/></svg>Phone Code
+        </button>
+        <button class="pair-tab" id="tab-qr" role="tab" aria-selected="false" aria-controls="pane-qr">
+          <svg class="icon" aria-hidden="true"><use href="#i-qr"/></svg>QR Scan
+        </button>
       </div>
 
-      <!-- step 1 -->
-      <section class="step on" id="step-start">
-        <p class="sub">Enter the number that will run Lily MD. WhatsApp will show an 8-character code to type on the phone.</p>
-        <label class="field" for="number">WhatsApp number</label>
-        <div class="input-row">
-          <input id="number" type="tel" inputmode="numeric" autocomplete="tel" placeholder="916033352400" />
-          <button class="btn" id="start">Get pairing code</button>
-        </div>
-        <p class="hint">Digits only, with the country code — no plus sign, no spaces.</p>
-        <p class="msg error" id="start-error"></p>
-        <details class="backend">
-          <summary>Server settings</summary>
-          <p class="hint">Only for a separately hosted frontend. If this page is served by the bot, leave it empty.</p>
-          <div class="input-row">
-            <input id="backend-url" type="url" placeholder="https://your-bot-host.example.com" />
-            <button class="btn ghost small" id="save-backend">Save</button>
+      <!-- Mode 1: Pair with Phone Number -->
+      <div id="pane-phone">
+        <!-- Phone Step 1: Input -->
+        <section class="step on" id="phone-step-1">
+          <div class="pair-head">
+            <h2>Link with Phone Number</h2>
+            <span class="step-index">01 / 02</span>
           </div>
-          <p class="hint" id="backend-status"></p>
-        </details>
-      </section>
+          <p class="sub">Select your country, enter your WhatsApp number, and generate your secure 8-digit linking code.</p>
 
-      <!-- step 2 -->
-      <section class="step" id="step-code">
-        <p class="sub">Type this code on the phone that owns the number.</p>
-        <div class="code-box" id="code">••••-••••</div>
-        <div class="timer" id="timer">Waiting for confirmation…</div>
-        <ol class="steps-list">
-          <li>Open WhatsApp and go to <strong>Settings</strong></li>
-          <li>Choose <strong>Linked devices</strong></li>
-          <li>Tap <strong>Link a device</strong></li>
-          <li>Select <strong>Link with phone number</strong> and enter the code</li>
-        </ol>
-        <div class="state-row">
-          <span>State</span>
-          <span class="state-chip" id="chip-init">initializing</span>
-          <span class="state-chip" id="chip-code">code ready</span>
-          <span class="state-chip" id="chip-connect">connecting</span>
-          <span class="state-chip" id="chip-done">connected</span>
-        </div>
-        <p class="msg info" id="code-msg"></p>
-        <p class="msg error" id="code-error"></p>
-      </section>
+          <div class="phone-select-wrap">
+            <select class="country-select" id="country-select" aria-label="Country Code">
+              <option value="91" selected>IN (+91) India</option>
+              <option value="1">US (+1) USA / Canada</option>
+              <option value="44">GB (+44) United Kingdom</option>
+              <option value="92">PK (+92) Pakistan</option>
+              <option value="234">NG (+234) Nigeria</option>
+              <option value="880">BD (+880) Bangladesh</option>
+              <option value="62">ID (+62) Indonesia</option>
+              <option value="55">BR (+55) Brazil</option>
+              <option value="27">ZA (+27) South Africa</option>
+              <option value="60">MY (+60) Malaysia</option>
+              <option value="63">PH (+63) Philippines</option>
+              <option value="20">EG (+20) Egypt</option>
+              <option value="254">KE (+254) Kenya</option>
+              <option value="49">DE (+49) Germany</option>
+              <option value="33">FR (+33) France</option>
+              <option value="966">SA (+966) Saudi Arabia</option>
+              <option value="971">AE (+971) UAE</option>
+              <option value="">Custom Code</option>
+            </select>
+            <input id="phone-number" type="tel" inputmode="numeric" autocomplete="tel" placeholder="6033352400" />
+          </div>
 
-      <!-- step 3 -->
-      <section class="step" id="step-done">
-        <div class="pair-head" style="margin-top:-4px">
-          <h2>Linked</h2>
-          <span class="step-index" style="color:var(--ok)">03 / 03</span>
+          <button class="btn" id="btn-get-code" style="width:100%">
+            <svg class="icon sm" aria-hidden="true"><use href="#i-phone"/></svg>Get Pairing Code
+          </button>
+          <p class="msg error" id="phone-error"></p>
+
+          <details class="backend" style="margin-top:14px">
+            <summary>Custom Backend API URL</summary>
+            <p class="hint">For custom backend or external bots. Leave blank when served by Render.</p>
+            <div class="row" style="margin-top:8px">
+              <input id="backend-url" type="url" placeholder="https://your-bot-host.example.com" style="flex:1" />
+              <button class="btn ghost small" id="save-backend">Save</button>
+            </div>
+            <p class="hint" id="backend-status" style="margin-top:6px"></p>
+          </details>
+        </section>
+
+        <!-- Phone Step 2: Code Display & Countdown -->
+        <section class="step" id="phone-step-2">
+          <div class="pair-head">
+            <h2>Enter Code in WhatsApp</h2>
+            <span class="step-index">02 / 02</span>
+          </div>
+          <p class="sub">Open WhatsApp on your primary phone and enter this code to complete linking.</p>
+
+          <div class="code-display-wrap">
+            <div class="code-box" id="code-display">••••-••••</div>
+            <button class="btn ghost small copy-code-btn" id="btn-copy-code" title="Copy code">
+              <svg class="icon sm" aria-hidden="true"><use href="#i-copy"/></svg><span id="copy-btn-text">Copy</span>
+            </button>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px">
+            <div class="qr-timer-badge">
+              <span class="dot live"></span><span id="phone-timer">Waiting for confirmation…</span>
+            </div>
+            <button class="btn quiet small" id="btn-cancel-phone">Cancel</button>
+          </div>
+
+          <div class="stack" style="gap:8px">
+            <div class="inst-card">
+              <span class="inst-badge">1</span>
+              <div>Open <strong>WhatsApp</strong> on your phone.</div>
+            </div>
+            <div class="inst-card">
+              <span class="inst-badge">2</span>
+              <div>Tap <strong>Settings</strong> (iOS) or <strong>⋮ Menu</strong> (Android) &gt; <strong>Linked Devices</strong>.</div>
+            </div>
+            <div class="inst-card">
+              <span class="inst-badge">3</span>
+              <div>Tap <strong>Link a device</strong> &gt; <strong>Link with phone number instead</strong>.</div>
+            </div>
+            <div class="inst-card">
+              <span class="inst-badge">4</span>
+              <div>Enter the 8-digit code shown above to complete.</div>
+            </div>
+          </div>
+
+          <div class="state-row">
+            <span>Status</span>
+            <span class="state-chip" id="chip-init">initializing</span>
+            <span class="state-chip" id="chip-code">code ready</span>
+            <span class="state-chip" id="chip-connect">connecting</span>
+            <span class="state-chip" id="chip-done">connected</span>
+          </div>
+          <p class="msg info" id="phone-info"></p>
+          <p class="msg error" id="phone-step-error"></p>
+        </section>
+      </div>
+
+      <!-- Mode 2: Pair with QR Code -->
+      <div id="pane-qr" style="display:none">
+        <section class="step on" id="qr-step-active">
+          <div class="pair-head">
+            <h2>Scan WhatsApp QR Code</h2>
+            <span class="step-index">Instant Link</span>
+          </div>
+          <p class="sub">Point your WhatsApp camera at the QR code below to connect immediately.</p>
+
+          <div class="qr-viewfinder">
+            <div class="qr-corner tl"></div>
+            <div class="qr-corner tr"></div>
+            <div class="qr-corner bl"></div>
+            <div class="qr-corner br"></div>
+            <div class="qr-scan-line" id="qr-scanline"></div>
+            <div class="qr-canvas-wrap" id="qr-target">
+              <div class="empty" id="qr-placeholder" style="border:0">Starting QR session…</div>
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px">
+            <div class="qr-timer-badge">
+              <span class="dot live"></span><span id="qr-timer">Initializing Baileys QR…</span>
+            </div>
+            <div class="row">
+              <button class="btn ghost small" id="btn-refresh-qr"><svg class="icon sm" aria-hidden="true"><use href="#i-refresh"/></svg>Refresh</button>
+              <button class="btn quiet small" id="btn-cancel-qr">Cancel</button>
+            </div>
+          </div>
+
+          <div class="stack" style="gap:8px">
+            <div class="inst-card">
+              <span class="inst-badge">1</span>
+              <div>Open <strong>WhatsApp</strong> on your phone.</div>
+            </div>
+            <div class="inst-card">
+              <span class="inst-badge">2</span>
+              <div>Go to <strong>Settings</strong> (iOS) or <strong>⋮ Menu</strong> (Android) &gt; <strong>Linked Devices</strong>.</div>
+            </div>
+            <div class="inst-card">
+              <span class="inst-badge">3</span>
+              <div>Tap <strong>Link a device</strong> and scan the QR code above.</div>
+            </div>
+          </div>
+
+          <p class="msg info" id="qr-info"></p>
+          <p class="msg error" id="qr-error"></p>
+        </section>
+      </div>
+
+      <!-- Shared Success Step -->
+      <section class="step" id="step-connected">
+        <div class="pair-head">
+          <h2 style="color:var(--ok); display:flex; align-items:center; gap:8px">
+            <svg class="icon" style="color:var(--ok)"><use href="#i-check"/></svg>Connected Successfully
+          </h2>
+          <span class="step-index" style="color:var(--ok)">Live</span>
         </div>
-        <p class="sub" id="done-sub">Your session is ready. Keep it private — it grants full access to that account.</p>
-        <p class="msg info show" id="owner-msg"></p>
-        <label class="field" for="session">Session backup</label>
-        <textarea id="session" readonly></textarea>
-        <div class="row" style="margin-top:12px">
-          <button class="btn small" id="copy"><svg class="icon sm" aria-hidden="true"><use href="#i-copy"/></svg>Copy</button>
-          <button class="btn ghost small" id="download"><svg class="icon sm" aria-hidden="true"><use href="#i-download"/></svg>Download</button>
-          <a class="btn ghost small" href="login" id="go-dashboard">Dashboard</a>
-          <button class="btn quiet small" id="again">Pair another</button>
+        <div class="note ok" style="margin-bottom:16px">
+          <strong>Lily MD Connected Successfully.</strong><br />
+          Your WhatsApp session is now saved securely as <code>session.card</code> on the server.
         </div>
-        <p class="msg info" id="copy-msg"></p>
+        <p class="sub">Your bot is active. You can manage AYHA AI settings, protection rules, and view real-time logs from the Owner Dashboard.</p>
+
+        <div class="row" style="margin-top:16px">
+          <a class="btn small" href="dashboard"><svg class="icon sm" aria-hidden="true"><use href="#i-activity"/></svg>Open Dashboard</a>
+          <a class="btn ghost small" href="#commands"><svg class="icon sm" aria-hidden="true"><use href="#i-terminal"/></svg>View Commands</a>
+          <button class="btn quiet small" id="btn-pair-another">Pair Another Device</button>
+        </div>
       </section>
 
       <p class="pair-foot">
-        Lily MD is unofficial software built on Baileys and is not affiliated with WhatsApp.
-        Sessions are generated on your own server, shown once, and dropped from memory after 15 minutes.
+        Lily MD runs on Baileys Multi-Device. Sensitive credentials stay on your server and are protected with <code>0o600</code> permissions. No credentials are ever sent to external cloud storage.
       </p>
     </aside>
   </section>
 
+  <!-- Interactive Commands Documentation Browser -->
+  <section class="block" id="commands">
+    <div class="shell">
+      <div class="block-head">
+        <div>
+          <p class="eyebrow"><span class="mark"></span>Command Documentation</p>
+          <h2 class="display">Interactive Command Center</h2>
+        </div>
+        <p class="lede">Browse, search, and inspect all active bot commands. Commands are organized into categories with syntax, permissions, and usage instructions.</p>
+      </div>
+
+      <div class="cmd-search-bar">
+        <svg class="cmd-search-icon" aria-hidden="true"><use href="#i-search"/></svg>
+        <input class="cmd-search-input" id="cmd-search" type="search" placeholder="Search commands (e.g., .ai, .sticker, .antilink, .play)..." />
+      </div>
+
+      <div class="cmd-category-tabs" id="cmd-cats">
+        <button class="cmd-cat-btn active" data-cat="all">All Commands</button>
+        <button class="cmd-cat-btn" data-cat="ai & fun">AI &amp; Assistant</button>
+        <button class="cmd-cat-btn" data-cat="moderation">Moderation &amp; Group</button>
+        <button class="cmd-cat-btn" data-cat="media">Media &amp; Stickers</button>
+        <button class="cmd-cat-btn" data-cat="downloads">Downloads &amp; Media</button>
+        <button class="cmd-cat-btn" data-cat="system">System &amp; Owner</button>
+        <button class="cmd-cat-btn" data-cat="general">General</button>
+      </div>
+
+      <div class="cmd-grid" id="cmd-grid">
+        <div class="empty" style="grid-column: 1 / -1">Loading commands from server…</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Live Bot Status & Health Dashboard -->
+  <section class="block" id="status">
+    <div class="shell">
+      <div class="block-head">
+        <div>
+          <p class="eyebrow"><span class="mark"></span>Real-Time Monitoring</p>
+          <h2 class="display">Bot Status &amp; Health</h2>
+        </div>
+        <div class="row" style="justify-content: flex-end">
+          <button class="btn ghost small" id="btn-refresh-status">
+            <svg class="icon sm" aria-hidden="true"><use href="#i-refresh"/></svg>Refresh Status
+          </button>
+        </div>
+      </div>
+
+      <div class="status-grid">
+        <div class="status-card">
+          <div class="status-card-header"><span class="dot live"></span>Connection</div>
+          <div class="status-card-val" id="health-conn">—</div>
+          <div class="status-card-sub" id="health-conn-sub">Baileys WebSocket</div>
+        </div>
+
+        <div class="status-card">
+          <div class="status-card-header"><svg class="icon sm" aria-hidden="true"><use href="#i-cpu"/></svg>AI Engine</div>
+          <div class="status-card-val" id="health-ai">AYHA</div>
+          <div class="status-card-sub" id="health-ai-sub">Groq / Gemini / Custom</div>
+        </div>
+
+        <div class="status-card">
+          <div class="status-card-header"><svg class="icon sm" aria-hidden="true"><use href="#i-activity"/></svg>Uptime</div>
+          <div class="status-card-val" id="health-uptime">—</div>
+          <div class="status-card-sub" id="health-uptime-sub">Running Process</div>
+        </div>
+
+        <div class="status-card">
+          <div class="status-card-header"><svg class="icon sm" aria-hidden="true"><use href="#i-terminal"/></svg>Active Commands</div>
+          <div class="status-card-val" id="health-cmds">100+</div>
+          <div class="status-card-sub">Loaded Modules</div>
+        </div>
+
+        <div class="status-card">
+          <div class="status-card-header"><svg class="icon sm" aria-hidden="true"><use href="#i-database"/></svg>Database</div>
+          <div class="status-card-val" id="health-db">Ready</div>
+          <div class="status-card-sub">SQLite / MySQL Store</div>
+        </div>
+
+        <div class="status-card">
+          <div class="status-card-header"><svg class="icon sm" aria-hidden="true"><use href="#i-shield"/></svg>Security</div>
+          <div class="status-card-val">Protected</div>
+          <div class="status-card-sub">session.card (0o600)</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AYHA Assistant & Features Showcase -->
   <section class="block" id="capabilities">
     <div class="shell">
       <div class="block-head">
         <div>
-          <p class="eyebrow"><span class="mark"></span>01 — Capabilities</p>
-          <h2 class="display">Built for owners who want control</h2>
+          <p class="eyebrow"><span class="mark"></span>Core Features</p>
+          <h2 class="display">Engineered for control &amp; intelligence</h2>
         </div>
-        <p class="lede" style="font-size:14.5px">Every switch in the dashboard reads and writes the real bot state. Nothing is simulated, nothing is hidden behind a placeholder panel.</p>
+        <p class="lede">Every toggle in the dashboard controls real bot behavior. No mock panels, no placeholder switches.</p>
       </div>
+
       <div class="feature-grid">
         <article class="feature">
           <div class="icon-box"><svg class="icon" aria-hidden="true"><use href="#i-chat"/></svg></div>
-          <h3>AYHA auto-reply</h3>
-          <p>Private, group or all chats, with an allowlist, a blocklist and a cooldown so it never floods a conversation.</p>
+          <h3>AYHA Auto-Reply</h3>
+          <p>Answers private and group chats naturally. Supports quiet hours, contact allowlists, blocklists, and reply rate limiting.</p>
         </article>
+
         <article class="feature">
           <div class="icon-box"><svg class="icon" aria-hidden="true"><use href="#i-voice"/></svg></div>
-          <h3>Learned talking style</h3>
-          <p>AYHA mirrors your Hinglish, slang and punctuation from your own messages — never from group chatter.</p>
+          <h3>Learned Tone &amp; Style</h3>
+          <p>Learns talking rhythm and vocabulary from your sent messages. Native support for English, Hindi, and Bengali/Banglish.</p>
         </article>
+
         <article class="feature">
           <div class="icon-box"><svg class="icon" aria-hidden="true"><use href="#i-shield"/></svg></div>
-          <h3>Protection suite</h3>
-          <p>Anti-call, anti-delete, anti-bot, PM blocker and moderation toggles that survive restarts.</p>
+          <h3>Protection &amp; Moderation</h3>
+          <p>Full suite of automated guards: Anti-call, anti-delete, anti-bot, anti-link, and private chat blocker.</p>
         </article>
+
         <article class="feature">
           <div class="icon-box"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg></div>
-          <h3>Downloads and media</h3>
-          <p>Song, video, Instagram, TikTok, Spotify and thirteen more platforms from a single prefix.</p>
+          <h3>Media Downloader</h3>
+          <p>High-speed audio and video downloaders for YouTube, Spotify, Instagram, Facebook, TikTok, and Twitter.</p>
         </article>
+
         <article class="feature">
           <div class="icon-box"><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg></div>
-          <h3>Owner-only access</h3>
-          <p>Hashed passwords, HttpOnly sessions, CSRF checks, lockouts and a readable audit log.</p>
+          <h3>Owner Security Console</h3>
+          <p>Scrypt-hashed owner authentication, HttpOnly SameSite cookies, CSRF tokens, and automatic security audit logging.</p>
         </article>
+
         <article class="feature">
-          <div class="icon-box"><svg class="icon" aria-hidden="true"><use href="#i-activity"/></svg></div>
-          <h3>Live status</h3>
-          <p>Server-Sent Events stream connection, uptime, AI usage and memory straight from the process.</p>
+          <div class="icon-box"><svg class="icon" aria-hidden="true"><use href="#i-database"/></svg></div>
+          <h3>Permanent Session Backup</h3>
+          <p>Automatic atomic backups to <code>session.card</code>. Ensures zero reconnection prompts across server restarts.</p>
         </article>
       </div>
     </div>
   </section>
 
-  <section class="block" id="ayha">
-    <div class="shell">
-      <div class="glass ai-band">
-        <div>
-          <p class="eyebrow"><span class="mark"></span>02 — AYHA</p>
-          <h2 class="display">She texts like you,<br />not like a bot.</h2>
-          <p>AYHA reads the messages you send from your own phone and mirrors the tone, the language mix and the rhythm. Adjust the style any time with <code>.aistyle</code> or from the dashboard, and test a reply before a single message goes out.</p>
-          <p class="language-line">
-            <span>English</span><span>हिन्दी</span><span>Hinglish</span><span>বাংলা</span><span>Benlish</span>
-          </p>
-          <a class="btn ghost small" href="login">Configure AYHA<svg class="icon sm" aria-hidden="true"><use href="#i-arrow"/></svg></a>
-        </div>
-        <div class="chat" aria-hidden="true">
-          <p class="chat-time">Private chat</p>
-          <div class="bubble them">bro tu free hai?</div>
-          <div class="bubble bot">haan bol, kya scene hai</div>
-          <div class="bubble them">kal ka plan?</div>
-          <div class="bubble bot">kal shaam free hu, tu bata</div>
-        </div>
-      </div>
-    </div>
-  </section>
-
+  <!-- Security Section -->
   <section class="block" id="security">
     <div class="shell">
       <div class="block-head">
         <div>
-          <p class="eyebrow"><span class="mark"></span>03 — Security</p>
-          <h2 class="display">Your session never leaves your server</h2>
+          <p class="eyebrow"><span class="mark"></span>Privacy Architecture</p>
+          <h2 class="display">Your credentials stay on your server</h2>
         </div>
-        <p class="lede" style="font-size:14.5px">WhatsApp credentials stay on the machine that runs the bot. The website only ever sees a session you choose to copy.</p>
+        <p class="lede">WhatsApp authentication data is private. Lily MD never uploads credentials to Mega, Pastebin, or public servers.</p>
       </div>
       <div class="security-grid">
         <article class="security-card">
-          <div class="ico-row"><svg class="icon sm" aria-hidden="true"><use href="#i-hash"/></svg><span class="micro">Passwords</span></div>
-          <h3>scrypt hashing</h3>
-          <p>Owner passwords are stored as salted scrypt hashes and compared in constant time.</p>
+          <div class="ico-row"><svg class="icon sm" aria-hidden="true"><use href="#i-lock"/></svg><span>Passwords</span></div>
+          <h3>Scrypt Hashing</h3>
+          <p>Owner credentials are protected with high-work-factor salted scrypt hashes and compared in constant time.</p>
         </article>
         <article class="security-card">
-          <div class="ico-row"><svg class="icon sm" aria-hidden="true"><use href="#i-fingerprint"/></svg><span class="micro">Sessions</span></div>
-          <h3>HttpOnly cookies</h3>
-          <p>Session tokens live in HttpOnly, SameSite cookies; only their SHA-256 hash is stored server-side.</p>
+          <div class="ico-row"><svg class="icon sm" aria-hidden="true"><use href="#i-shield"/></svg><span>Session Card</span></div>
+          <h3>Atomic Backups</h3>
+          <p>Session data is atomically packed into <code>session.card</code> with <code>0o600</code> permissions and excluded from git.</p>
         </article>
         <article class="security-card">
-          <div class="ico-row"><svg class="icon sm" aria-hidden="true"><use href="#i-receipt"/></svg><span class="micro">Accountability</span></div>
-          <h3>Audit trail</h3>
-          <p>Logins, lockouts, password resets and configuration changes are all recorded.</p>
+          <div class="ico-row"><svg class="icon sm" aria-hidden="true"><use href="#i-activity"/></svg><span>Audit Trails</span></div>
+          <h3>Security Logs</h3>
+          <p>All authentication events, command executions, and configuration changes are recorded in the owner log.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- Help & Deployment Guide -->
+  <section class="block" id="help">
+    <div class="shell">
+      <div class="block-head">
+        <div>
+          <p class="eyebrow"><span class="mark"></span>Documentation &amp; Setup</p>
+          <h2 class="display">Deployment &amp; Troubleshooting</h2>
+        </div>
+        <p class="lede">Simple guides for hosting your bot on VPS, cloud containers, or linking via dual pairing.</p>
+      </div>
+
+      <div class="feature-grid">
+        <article class="feature">
+          <div class="icon-box"><svg class="icon" aria-hidden="true"><use href="#i-terminal"/></svg></div>
+          <h3>VPS / Ubuntu Setup</h3>
+          <p>Install Node.js 18+, clone the repository, run <code>npm install</code>, and start the daemon with PM2: <code>pm2 start index.js --name lilymd</code>.</p>
+        </article>
+
+        <article class="feature">
+          <div class="icon-box"><svg class="icon" aria-hidden="true"><use href="#i-globe"/></svg></div>
+          <h3>Render Web Service</h3>
+          <p>Deploy the website independently on Render with one click. Automatic HTTPS, custom domain support, and dedicated health monitoring.</p>
+        </article>
+
+        <article class="feature">
+          <div class="icon-box"><svg class="icon" aria-hidden="true"><use href="#i-refresh"/></svg></div>
+          <h3>Pairing Troubleshooting</h3>
+          <p>If pairing fails with 401/403, ensure your phone has active internet and WhatsApp is updated. Use QR mode if phone code times out.</p>
         </article>
       </div>
     </div>
@@ -562,180 +699,18 @@
 <footer class="site-foot">
   <div class="shell foot-inner">
     <div class="foot-brand">
-      <strong>Lily MD</strong>
-      <p>Your WhatsApp, your assistant, your intelligence.<br />Powered by AYHA AI · Developed and customised by Rahul Haldar</p>
+      <strong>Lily MD Platform</strong>
+      <p>WhatsApp Multi-Device Automation &amp; AYHA AI Assistant<br />Developed &amp; maintained by Rahul Haldar</p>
     </div>
     <div class="foot-links">
-      <a href="login">Owner login<svg class="icon sm" aria-hidden="true"><use href="#i-arrow"/></svg></a>
-      <a href="dashboard">Dashboard<svg class="icon sm" aria-hidden="true"><use href="#i-arrow"/></svg></a>
-      <a href="https://github.com/mrxfx/LilyMD" target="_blank" rel="noopener">GitHub<svg class="icon sm" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+      <a href="login"><svg class="icon sm" aria-hidden="true"><use href="#i-lock"/></svg>Owner Login</a>
+      <a href="dashboard"><svg class="icon sm" aria-hidden="true"><use href="#i-activity"/></svg>Dashboard</a>
+      <a href="https://github.com/mrxfx/LilyMD" target="_blank" rel="noopener"><svg class="icon sm" aria-hidden="true"><use href="#i-globe"/></svg>GitHub Repository</a>
     </div>
   </div>
 </footer>
 
 <script src="config.js"></script>
 <script src="app.js"></script>
-<script>
-(function () {
-  var $ = function (id) { return document.getElementById(id); };
-  var steps = ['step-start', 'step-code', 'step-done'];
-  var pollTimer = null;
-  var tickTimer = null;
-  var deadline = 0;
-  var lastSession = '';
-  var busy = false;
-
-  function show(step) {
-    steps.forEach(function (id) { $(id).classList.toggle('on', id === step); });
-  }
-  function setMsg(el, text, kind) {
-    el.textContent = text || '';
-    el.className = 'msg ' + (kind || 'error') + (text ? ' show' : '');
-  }
-  function setChips(state) {
-    var map = { initializing: 'chip-init', waiting: 'chip-init', requesting: 'chip-init', code: 'chip-code', connecting: 'chip-connect', connected: 'chip-done' };
-    ['chip-init', 'chip-code', 'chip-connect', 'chip-done'].forEach(function (id) { $(id).classList.toggle('active', map[state] === id); });
-  }
-  function stopPolling() {
-    if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }
-    if (tickTimer) { clearInterval(tickTimer); tickTimer = null; }
-  }
-  function tick() {
-    var left = Math.max(0, Math.round((deadline - Date.now()) / 1000));
-    $('timer').textContent = left > 0
-      ? 'Code expires in ' + Math.floor(left / 60) + ':' + String(left % 60).padStart(2, '0')
-      : 'Code may have expired — you can start again.';
-  }
-
-  async function start() {
-    if (busy) return;
-    var number = $('number').value.replace(/[^0-9]/g, '');
-    setMsg($('start-error'), '');
-    if (number.length < 7) {
-      setMsg($('start-error'), 'Enter your full number with the country code.');
-      return;
-    }
-    busy = true;
-    $('start').disabled = true;
-    $('start').textContent = 'Contacting WhatsApp…';
-    try {
-      var data = await LilyAPI.api('/api/pair', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ number: number }),
-        timeoutMs: 25000
-      });
-      show('step-code');
-      $('code').textContent = '••••-••••';
-      setChips('initializing');
-      setMsg($('code-msg'), 'Starting a secure session…', 'info');
-      setMsg($('code-error'), '');
-      deadline = Date.now() + 180000;
-      tick();
-      tickTimer = setInterval(tick, 1000);
-      waitForCode(data.id, 0);
-    } catch (err) {
-      show('step-start');
-      setMsg($('start-error'), err.message);
-    } finally {
-      busy = false;
-      $('start').disabled = false;
-      $('start').textContent = 'Get pairing code';
-    }
-  }
-
-  async function waitForCode(id, attempt) {
-    if (!id) {
-      setMsg($('code-error'), 'The server did not return a session id. Start again.');
-      return;
-    }
-    try {
-      var data = await LilyAPI.api('/api/status?id=' + encodeURIComponent(id), { timeoutMs: 15000 });
-      setChips(data.state);
-      if (data.code) {
-        $('code').textContent = data.code;
-        setMsg($('code-msg'), 'Waiting for you to confirm in WhatsApp…', 'info');
-      }
-      if (data.state === 'connecting') setMsg($('code-msg'), 'Code accepted — finishing the handshake…', 'info');
-      if (data.state === 'connected' && data.sessionId) {
-        stopPolling();
-        lastSession = data.sessionId;
-        $('session').value = data.sessionId;
-        setMsg($('owner-msg'), data.ownerAccount
-          ? (data.passwordSent
-              ? 'An owner dashboard account was created and the temporary password was sent to you on WhatsApp.'
-              : 'An owner dashboard account was created, but the password message could not be delivered — use “Reset owner password” from another owner account.')
-          : 'This number is not a configured owner, so no dashboard account was created. Use the owner number to manage Lily MD.', data.ownerAccount ? 'info' : 'info');
-        show('step-done');
-        return;
-      }
-      if (data.state === 'failed') {
-        stopPolling();
-        setMsg($('code-msg'), '');
-        setMsg($('code-error'), data.error || 'Pairing failed. Please try again.');
-        return;
-      }
-    } catch (err) {
-      if (err.status === 404) {
-        stopPolling();
-        setMsg($('code-error'), err.message);
-        return;
-      }
-      if (attempt > 6) {
-        setMsg($('code-error'), err.message);
-      }
-    }
-    pollTimer = setTimeout(function () { waitForCode(id, attempt + 1); }, 2000);
-  }
-
-  $('start').addEventListener('click', start);
-  $('number').addEventListener('keydown', function (e) { if (e.key === 'Enter') start(); });
-
-  $('copy').addEventListener('click', async function () {
-    try {
-      await navigator.clipboard.writeText(lastSession);
-      setMsg($('copy-msg'), 'Copied — paste it into SESSION_ID on your host.', 'info');
-    } catch (err) {
-      $('session').select();
-      setMsg($('copy-msg'), 'Press Ctrl/Cmd + C to copy the selection.', 'info');
-    }
-  });
-
-  $('download').addEventListener('click', function () {
-    var blob = new Blob([lastSession], { type: 'text/plain' });
-    var a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'lily-md-session.txt';
-    a.click();
-    URL.revokeObjectURL(a.href);
-  });
-
-  $('again').addEventListener('click', function () {
-    stopPolling();
-    lastSession = '';
-    $('session').value = '';
-    setMsg($('copy-msg'), '');
-    $('number').value = '';
-    show('step-start');
-  });
-
-  // Backend URL (for a frontend hosted elsewhere, e.g. Vercel)
-  $('backend-url').value = LilyAPI.backend();
-  $('backend-status').textContent = LilyAPI.backend()
-    ? 'Current backend: ' + LilyAPI.backend()
-    : 'Currently using this page’s own origin (' + location.origin + ').';
-  $('save-backend').addEventListener('click', async function () {
-    var url = LilyAPI.setBackend($('backend-url').value);
-    $('backend-status').textContent = url ? 'Saved: ' + url : 'Using ' + location.origin;
-    try {
-      var info = await LilyAPI.api('/api/info', { timeoutMs: 8000 });
-      setMsg($('start-error'), '');
-      $('backend-status').textContent = 'Connected to ' + info.bot + ' — ' + (url || location.origin);
-    } catch (err) {
-      setMsg($('start-error'), err.message);
-    }
-  });
-})();
-</script>
 </body>
 </html>

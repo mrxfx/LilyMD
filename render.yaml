@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: lily-md-website
+    env: node
+    plan: free
+    buildCommand: npm install --omit=dev
+    startCommand: npm run website
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: BOT_NAME
+        value: Lily MD
+      - key: WEBSITE_URL
+        generateValue: false

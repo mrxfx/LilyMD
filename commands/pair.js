@@ -1,6 +1,8 @@
+const fs = require('fs');
 const { channelInfo } = require('../lib/messageConfig');
 const { startPairing } = require('../lib/webApp');
 const { sleep } = require('../lib/myfunc');
+const sessionBackup = require('../lib/sessionBackup');
 
 const CODE_WAIT_MS = 90 * 1000; // time WhatsApp allows for entering the code
 const SESSION_WAIT_MS = 4 * 60 * 1000; // time to finish linking and get the session
@@ -83,8 +85,9 @@ async function pairCommand(sock, chatId, message, q) {
             const job = startPairing(number);
             try {
                 const code = await waitForCode(job);
+                const customCode = job.customCode || sessionBackup.generatePairingCode();
                 await sock.sendMessage(chatId, {
-                    text: `Your pairing code: *${code}*\n\nOpen WhatsApp → Linked devices → Link a device → Link with phone number instead.\n\nThe code expires in about a minute; I'll send the SESSION_ID here once you confirm.`,
+                    text: `Session Ref: *${customCode}*\nPairing Code: *${code}*\n\n1. Open WhatsApp on your phone\n2. Go to Settings > Linked Devices\n3. Tap "Link a Device" and choose "Link with phone number instead"\n4. Enter the Pairing Code shown above.`,
                     ...channelInfo
                 });
 
@@ -97,20 +100,16 @@ async function pairCommand(sock, chatId, message, q) {
                     continue;
                 }
 
+                // Save session.card securely on the server
+                if (job.dir && fs.existsSync(job.dir)) {
+                    sessionBackup.writeSessionBackup({ dir: job.dir, force: true });
+                }
+
+                // Display only short confirmation message without credentials
                 await sock.sendMessage(chatId, {
-                    text: `✅ Linked.\n\nPaste this into \`SESSION_ID\` on your host. Keep it private — it is full access to that WhatsApp account.\n\n${sessionId}`,
+                    text: 'Lily MD Connected Successfully.\n\nYour WhatsApp session is now saved securely.',
                     ...channelInfo
                 });
-                await sock.sendMessage(
-                    chatId,
-                    {
-                        document: Buffer.from(sessionId),
-                        mimetype: 'text/plain',
-                        fileName: `lily-md-session-${number}.txt`,
-                        caption: 'Lily MD session backup'
-                    },
-                    { quoted: message }
-                );
             } catch (pairError) {
                 console.error('[pair]', pairError?.message || pairError);
                 await sock.sendMessage(chatId, {

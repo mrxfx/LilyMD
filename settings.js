@@ -20,7 +20,7 @@ const settings = {
   version: '3.0.8',
   updateZipUrl: process.env.UPDATE_ZIP_URL || '',
   githubRepo: process.env.GITHUB_REPO || 'mrxfx/LilyMD',
-  websiteUrl: process.env.WEBSITE_URL || 'https://lilymd.vercel.app',
+  websiteUrl: process.env.WEBSITE_URL || 'https://lilymd.onrender.com',
   newsletterJid: process.env.NEWSLETTER_JID || '',
   channelLink: process.env.CHANNEL_LINK || '',
   supportGroupLink: process.env.SUPPORT_GROUP_LINK || '',

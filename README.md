@@ -23,7 +23,7 @@
 | **Default AI model** | `openrouter/free` |
 | **Configuration** | JSON settings + local session storage (`./session`) |
 | **Previous hosting** | OptikLink |
-| **Dashboard** | Vercel |
+| **Website & Dashboard** | Render (Web Service) |
 
 ---
 
@@ -32,7 +32,7 @@
 - **AYHA AI assistant** — `.ai <question>` for one-off answers, `.chatbot on` for a group chatbot that replies when mentioned or replied to, and `.aiutoreply on` for private-chat auto-reply that answers every DM in your own talking style (groups are never auto-answered)
 - Group management: tag all, mute/unmute, promote/demote, kick, warnings, welcome/goodbye
 - Protection: anti-link, anti-badword, anti-bot, anti-call, anti-delete, anti-tag, PM blocker
-- **Website link** — `.website` shares your Vercel site, and the same URL is sent as the AI referer
+- **Website link** — `.website` shares your Render website URL, and the same URL is sent as the AI referer
 - **Universal downloader** — `.dl <any link>` auto-detects 13 platforms (TikTok, Instagram, Pinterest, Facebook, Twitter/X, Threads, Videy, Mega, SoundCloud, Spotify, YouTube, Sfile, MediaFire) and sends the media, Atlas-MD style
 - **26 anime reactions** — `.hug`, `.slap`, `.bonk`, `.pat`, `.cuddle`, `.highfive`, `.yeet` and 19 more, animated via Tenor
 - **Two prefixes** — every command works with `.` or Atlas's `-`, so `-help` and `.help` are the same
@@ -82,7 +82,7 @@ Optional settings (all default to off/disabled):
 | Variable | Purpose |
 |---|---|
 | `AI_DAILY_LIMIT` | AYHA requests per user per day (default `30`, `0` = unlimited). Owner and sudo are exempt. |
-| `WEBSITE_URL` | Public site shown by `.website` and used as the AI request referer (default `https://lilymd.vercel.app`). |
+| `WEBSITE_URL` | Public site shown by `.website` and used as the AI request referer (default `https://lilymd.onrender.com`). |
 | `CHANNEL_LINK` | Your WhatsApp channel, shown by the channel button and `.alive` / ready message. |
 | `SUPPORT_GROUP_LINK` | Your support group, shown by the support button. |
 | `NEWSLETTER_JID` | Forwarding channel JID. Leave empty and messages are simply not forwarded. |
@@ -166,35 +166,48 @@ way back in. If WhatsApp unlinks the device (logged out / 401), the session is
 truly dead: the bot says so and you pair again; temporary disconnects, conflicts
 and crashes never delete `session/`.
 
-### Pairing website (2-in-1)
+### Website Hosting on Render (Render Web Service)
 
-The bot serves a small public site on its own port, so one process gives you both
-the bot and the website — no second host or second port:
+The Lily MD website runs independently as a standalone **Render Web Service** (or as part of the 2-in-1 server on your bot host). It does not require any external proxies and does not depend on OptikLink for website hosting or APIs.
 
 ```bash
-node index.js          # website at http://localhost:8080, health at /health
-npm run website        # website only, without the bot (WEB_PORT, default 3000)
+npm run website        # website standalone server (port determined by PORT / WEB_PORT)
+node index.js          # 2-in-1 mode: runs bot + website together on PORT (default 8080)
 ```
 
-Visitors link their own WhatsApp and take the session away:
+#### Step-by-Step Render Deployment
 
-1. The visitor enters their number with country code.
-2. Baileys requests a real pairing code, which the page shows.
-3. After they confirm it in WhatsApp, the page downloads the creds as a base64
-   `SESSION_ID` — the same format `SESSION_ID` restores on boot.
+1. **Create Web Service on Render**:
+   - Go to the [Render Dashboard](https://dashboard.render.com/) and click **New +** → **Web Service**.
+   - Connect your GitHub repository (`LilyMD`).
+2. **Configure Service Settings**:
+   - **Name**: `lily-md-website` (or your preferred name)
+   - **Region**: Choose the closest region (e.g., `Oregon`, `Frankfurt`, `Singapore`).
+   - **Branch**: `main`
+   - **Root Directory**: Leave blank (root of repository).
+   - **Runtime**: `Node`
+   - **Build Command**: `npm install --omit=dev`
+   - **Start Command**: `npm run website`
+   - **Plan**: `Free`
+3. **Environment Variables**:
+   Add the following variables under the **Environment** tab:
+   - `NODE_ENV`: `production`
+   - `BOT_NAME`: `Lily MD`
+   - `WEBSITE_URL`: `https://<your-service-name>.onrender.com`
+   *(Render automatically assigns `PORT=10000` to the container).*
+4. **Health Check Path**:
+   - Under **Advanced Settings**, set **Health Check Path** to `/health`.
+   - The server answers `GET /health` with HTTP 200 and system JSON telemetry.
+5. **Deploy**:
+   - Click **Create Web Service**. Render builds the service, launches `npm run website`, verifies `/health`, and provisions automatic HTTPS for your `*.onrender.com` domain.
 
-Sessions are packed on the server, returned once, and dropped from memory after
-15 minutes. Pairings are limited to 6 per IP per hour and 4 at a time. **Anyone
-who holds a `SESSION_ID` controls that WhatsApp account**, so keep it private.
-The site needs publicly reachable `WEB_PORT`, which a plain WhatsApp host such
-as OptikLink does not expose by default — put it behind a reverse proxy or run
-it on a VPS where that port is open.
+Visitors can use the phone pairing code generator, interactive Baileys QR code scanner, interactive commands documentation browser, and the live status monitor directly on Render.
 
 ### Checks
 
 ```bash
 npm test        # syntax-checks every project .js file, no dependencies needed
-npm run test:web  # HTTP tests for the website + dashboard API (port 34567)
+npm run test:web  # HTTP tests for the website + dashboard API
 ```
 
 ### Web platform docs
@@ -202,12 +215,11 @@ npm run test:web  # HTTP tests for the website + dashboard API (port 34567)
 | Document | What it covers |
 |---|---|
 | [`LILY_WEB_ARCHITECTURE.md`](LILY_WEB_ARCHITECTURE.md) | How the site, API and bot fit together |
-| [`PAIRING_SYSTEM_REPORT.md`](PAIRING_SYSTEM_REPORT.md) | The Vercel JSON bug, root cause and fix |
+| [`RENDER_DEPLOYMENT.md`](RENDER_DEPLOYMENT.md) | Render Web Service deployment guide & configuration |
 | [`AUTHENTICATION_SECURITY_REPORT.md`](AUTHENTICATION_SECURITY_REPORT.md) | Hashing, sessions, CSRF, lockout, audit log |
 | [`DASHBOARD_IMPLEMENTATION_REPORT.md`](DASHBOARD_IMPLEMENTATION_REPORT.md) | The 16 dashboard sections and what they read |
 | [`API_INTEGRATION_REPORT.md`](API_INTEGRATION_REPORT.md) | Every endpoint, request and response shape |
-| [`DEPLOYMENT_REPORT.md`](DEPLOYMENT_REPORT.md) | Vercel (frontend) + Node host (bot) setup |
-| [`FINAL_TEST_REPORT.md`](FINAL_TEST_REPORT.md) | What was tested and what was not |
+| [`FINAL_TEST_REPORT.md`](FINAL_TEST_REPORT.md) | What was tested and verified |
 
 ---
 

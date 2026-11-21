@@ -323,6 +323,157 @@ async function main() {
         aiProviders.chat = originalChat;
     }
 
+    console.log('\nAI Provider Architecture & Key/Model/Provider Failover (Section 8)');
+    aiConfig.clearCooldowns();
+    const originalChat2 = aiProviders.chat;
+    try {
+        // 1. Supported active providers
+        check('active providers limited to gemini, groq, custom',
+            aiProviders.PROVIDER_IDS.length === 3 &&
+            aiProviders.PROVIDER_IDS.includes('gemini') &&
+            aiProviders.PROVIDER_IDS.includes('groq') &&
+            aiProviders.PROVIDER_IDS.includes('custom')
+        );
+
+        // 2. Multiple Groq API keys with one model
+        aiConfig.setModels('groq', ['openai/gpt-oss-120b', 'qwen/qwen3.8-27b', 'openai/gpt-oss-20b']);
+        const gKey1 = aiConfig.addKey('groq', 'gsk_test_groq_key_1_abcdef123456', { model: 'openai/gpt-oss-120b', label: 'groq-key-1' });
+        const gKey2 = aiConfig.addKey('groq', 'gsk_test_groq_key_2_abcdef123456', { model: 'openai/gpt-oss-120b', label: 'groq-key-2' });
+        const gKey3 = aiConfig.addKey('groq', 'gsk_test_groq_key_3_abcdef123456', { model: 'openai/gpt-oss-120b', label: 'groq-key-3' });
+        check('multiple groq keys added', gKey1.ok && gKey2.ok && gKey3.ok);
+
+        const groqPublic = aiConfig.getKeysPublic('groq');
+        check('groq keys stored with masked representations',
+            groqPublic.length >= 3 &&
+            groqPublic.every((k) => k.maskedKey.includes('…') && !k.maskedKey.includes('abcdef123456'))
+        );
+
+        // 3. Multiple Gemini API keys
+        const gemKey1 = aiConfig.addKey('gemini', 'AIzaSyGeminiTestKey1_abcdef123456', { label: 'gemini-key-1' });
+        const gemKey2 = aiConfig.addKey('gemini', 'AIzaSyGeminiTestKey2_abcdef123456', { label: 'gemini-key-2' });
+        check('multiple gemini keys added', gemKey1.ok && gemKey2.ok);
+
+        // 4. Multiple Custom API keys
+        aiConfig.setBaseUrl('custom', 'https://api.custom-ai.example/v1');
+        aiConfig.addModel('custom', 'llama-3.3-70b');
+        const cKey1 = aiConfig.addKey('custom', 'sk-custom-key-1-abcdef123456', { model: 'llama-3.3-70b', label: 'custom-key-1' });
+        const cKey2 = aiConfig.addKey('custom', 'sk-custom-key-2-abcdef123456', { model: 'llama-3.3-70b', label: 'custom-key-2' });
+        check('multiple custom keys added', cKey1.ok && cKey2.ok);
+
+        // 5. Automatic key rotation after HTTP 429
+        aiConfig.clearCooldowns();
+        aiConfig.setPriority(['groq', 'gemini', 'custom']);
+        const invokedKeys = [];
+        aiProviders.chat = async (messages, options) => {
+            invokedKeys.push(options.apiKey);
+            if (options.apiKey === 'gsk_test_groq_key_1_abcdef123456') {
+                const err = new Error('Rate limit reached: 429 Too Many Requests (TPM exceeded)');
+                err.status = 429;
+                throw err;
+            }
+            if (options.apiKey === 'gsk_test_groq_key_2_abcdef123456') {
+                return 'Rotated to key 2 successfully!';
+            }
+            return 'Default reply';
+        };
+
+        const rotateResult = await aiConfig.chatWithFailover([{ role: 'user', content: 'test rotation' }], { depth: 'fast' });
+        check('key 1 was attempted first', invokedKeys[0] === 'gsk_test_groq_key_1_abcdef123456');
+        check('automatically rotated to key 2 on 429', invokedKeys.includes('gsk_test_groq_key_2_abcdef123456'));
+        check('successful reply returned after key rotation', rotateResult.text === 'Rotated to key 2 successfully!');
+        const key1Status = aiConfig.getKeysPublic('groq').find((k) => k.id === gKey1.id);
+        check('rate-limited key is marked coolingDown', key1Status && key1Status.coolingDown === true);
+
+        // 6. Model fallback when all keys for a model hit 429
+        aiConfig.clearCooldowns();
+        const modelCalls = [];
+        aiProviders.chat = async (messages, options) => {
+            modelCalls.push({ model: options.model, key: options.apiKey });
+            if (options.model === 'openai/gpt-oss-120b') {
+                const err = new Error('Model rate limited (429)');
+                err.status = 429;
+                throw err;
+            }
+            if (options.model === 'qwen/qwen3.8-27b') {
+                return 'Fallback to qwen model succeeded!';
+            }
+            return 'Other model reply';
+        };
+
+        const modelFallbackResult = await aiConfig.chatWithFailover([{ role: 'user', content: 'test model fallback' }], { depth: 'fast' });
+        check('attempted gpt-oss-120b model first', modelCalls.some((c) => c.model === 'openai/gpt-oss-120b'));
+        check('fell back to qwen/qwen3.8-27b model', modelCalls.some((c) => c.model === 'qwen/qwen3.8-27b'));
+        check('model fallback returned correct response', modelFallbackResult.text === 'Fallback to qwen model succeeded!');
+
+        // 7. Provider fallback when all models for Groq fail
+        aiConfig.clearCooldowns();
+        aiConfig.setPriority(['groq', 'gemini', 'custom']);
+        const providerCalls = [];
+        aiProviders.chat = async (messages, options) => {
+            providerCalls.push(options.provider);
+            if (options.provider === 'groq') {
+                const err = new Error('Groq provider unavailable (429)');
+                err.status = 429;
+                throw err;
+            }
+            if (options.provider === 'gemini') {
+                return 'Gemini provider fallback succeeded!';
+            }
+            return 'Other provider';
+        };
+
+        const provFallbackResult = await aiConfig.chatWithFailover([{ role: 'user', content: 'test provider fallback' }], { depth: 'fast' });
+        check('groq attempted before gemini in priority', providerCalls[0] === 'groq');
+        check('fell back to gemini provider', providerCalls.includes('gemini'));
+        check('gemini reply received', provFallbackResult.text === 'Gemini provider fallback succeeded!');
+
+        // 8. Dynamic Provider Priority
+        aiConfig.setPriority(['custom', 'gemini', 'groq']);
+        check('priority order changed', aiConfig.getPriority().join(',') === 'custom,gemini,groq');
+        providerCalls.length = 0;
+        aiProviders.chat = async (messages, options) => {
+            providerCalls.push(options.provider);
+            return 'Custom provider reply';
+        };
+        const customPrioResult = await aiConfig.chatWithFailover([{ role: 'user', content: 'test custom priority' }], { depth: 'fast' });
+        check('custom provider attempted first with updated priority', providerCalls[0] === 'custom');
+        check('custom priority reply returned', customPrioResult.text === 'Custom provider reply');
+
+        // 9. Invalid API key handling (401 does not put key in 429 rate-limit cooldown)
+        aiConfig.clearCooldowns();
+        aiConfig.setPriority(['groq', 'gemini', 'custom']);
+        const invalidKeyCalls = [];
+        aiProviders.chat = async (messages, options) => {
+            invalidKeyCalls.push(options.apiKey);
+            if (options.apiKey === 'gsk_test_groq_key_1_abcdef123456') {
+                const err = new Error('401 Unauthorized: Invalid API Key');
+                err.status = 401;
+                throw err;
+            }
+            return 'Valid key reply';
+        };
+        await aiConfig.chatWithFailover([{ role: 'user', content: 'test invalid key' }], { depth: 'fast' });
+        const key1StatusAfter401 = aiConfig.getKeysPublic('groq').find((k) => k.id === gKey1.id);
+        check('invalid key (401) is not placed in rate-limit cooldown', key1StatusAfter401 && key1StatusAfter401.coolingDown === false);
+
+        // 10. Key testing (.aiprovider test <provider> <key-id>)
+        aiProviders.chat = async () => 'Test key response ok';
+        const keyTestRes = await aiConfig.testKey('groq', gKey2.id);
+        check('testKey succeeds with key-id', keyTestRes.ok === true && keyTestRes.reply === 'Test key response ok');
+        check('testKey masks raw key', keyTestRes.maskedKey.includes('…'));
+
+        // Clean up test keys
+        aiConfig.removeKey('groq', gKey1.id);
+        aiConfig.removeKey('groq', gKey2.id);
+        aiConfig.removeKey('groq', gKey3.id);
+        aiConfig.removeKey('gemini', gemKey1.id);
+        aiConfig.removeKey('gemini', gemKey2.id);
+        aiConfig.removeKey('custom', cKey1.id);
+        aiConfig.removeKey('custom', cKey2.id);
+    } finally {
+        aiProviders.chat = originalChat2;
+    }
+
     console.log(`\nAI engine: ${passed} passed, ${failed} failed`);
     if (failed) process.exitCode = 1;
 }

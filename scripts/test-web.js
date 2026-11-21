@@ -158,6 +158,25 @@ async function waitForServer(deadlineMs = 15000) {
         const missing = await request('/api/status?id=nope');
         check('unknown pairing job → 404 JSON', missing.status === 404 && missing.json && missing.json.code === 'JOB_EXPIRED', missing.text);
 
+        const qrPair = await request('/api/pair/qr', { method: 'POST' });
+        check('POST /api/pair/qr answers JSON', qrPair.type.includes('application/json'), qrPair.type);
+        check('QR missing dependencies → 503 JSON with code', qrPair.status === 503 && qrPair.json && qrPair.json.code === 'PAIRING_UNAVAILABLE');
+
+        const cancelBad = await request('/api/pair/cancel', { method: 'POST', body: {} });
+        check('cancel without id → 400 JSON', cancelBad.status === 400 && cancelBad.json);
+
+        const cancelUnknown = await request('/api/pair/cancel', { method: 'POST', body: { id: 'unknown-id' } });
+        check('cancel unknown id → 200 with canceled false', cancelUnknown.status === 200 && cancelUnknown.json.canceled === false);
+
+        const publicCommands = await request('/api/commands');
+        check('GET /api/commands → 200 with command list', publicCommands.status === 200 && Array.isArray(publicCommands.json.commands) && publicCommands.json.total > 0);
+
+        const generalStatus = await request('/api/status');
+        check('GET /api/status without id → 200 general health', generalStatus.status === 200 && generalStatus.json.ok === true && typeof generalStatus.json.uptime === 'number');
+
+        const healthApi = await request('/api/health');
+        check('GET /api/health → 200 health info', healthApi.status === 200 && healthApi.json.status === 'ok');
+
         const unknownApi = await request('/api/dash/status');
         check('dashboard unauthenticated → 401 JSON', unknownApi.status === 401 && unknownApi.json, unknownApi.text);
 
