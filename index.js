@@ -53,7 +53,7 @@ const store = require('./lib/lightweight_store')
 store.readFromFile()
 const settings = require('./settings')
 const { channelInfo } = require('./lib/messageConfig')
-const { restoreSessionFromEnv, scheduleSessionBackup } = require('./lib/sessionBackup')
+const sessionBackup = require('./lib/sessionBackup')
 const { startHealthServer } = require('./lib/healthServer')
 const database = require('./lib/db')
 const { runMigrations } = require('./lib/migrate')
@@ -146,7 +146,8 @@ async function bootstrapDatabase() {
 
 async function startXeonBotInc() {
     try {
-        restoreSessionFromEnv()
+        // Restore SESSION_ID (when needed) before Baileys reads ./session.
+        sessionBackup.restoreSessionFromEnv()
         await bootstrapDatabase().catch((error) => console.error('[db] bootstrap failed:', database.safeError(error)))
         let { version, isLatest } = await fetchLatestBaileysVersion()
         const { state, saveCreds } = await useMultiFileAuthState(`./session`)
@@ -175,8 +176,16 @@ async function startXeonBotInc() {
             keepAliveIntervalMs: 10000,
         })
 
-        // Save credentials when they update
+        // Save credentials when they update, then refresh the portable backup
+        // (debounced) and re-deliver it to the owner's chat when it changed.
         XeonBotInc.ev.on('creds.update', saveCreds)
+        XeonBotInc.ev.on('creds.update', () => {
+            try {
+                sessionBackup.onCredentialsUpdated({ getSock: () => currentSock })
+            } catch (error) {
+                console.error('[session] backup refresh failed:', error?.message || error)
+            }
+        })
 
     store.bind(XeonBotInc.ev)
 
@@ -326,7 +335,8 @@ async function startXeonBotInc() {
                 clearTimeout(reconnectTimer)
                 reconnectTimer = null
             }
-            scheduleSessionBackup()
+            // Backup + deliver a restorable SESSION_ID document to the owner.
+            sessionBackup.startBackups({ getSock: () => currentSock })
 
             try {
                 const botNumber = XeonBotInc.user.id.split(':')[0] + '@s.whatsapp.net';
@@ -371,13 +381,16 @@ async function startXeonBotInc() {
             }
 
             if (isLoggedOut) {
+                // WhatsApp invalidated this session (unlinked from the phone).
+                // A stale SESSION_ID cannot help; fresh pairing is required.
                 try {
                     rmSync('./session', { recursive: true, force: true })
-                    console.log(chalk.yellow('Session folder deleted. Please re-authenticate.'))
+                    console.log(chalk.yellow('Session folder removed (WhatsApp unlinked this device).'))
                 } catch (error) {
                     console.error('Error deleting session:', error)
                 }
-                console.log(chalk.red('Session logged out. Please re-authenticate.'))
+                console.log(chalk.red('🚪 WhatsApp logged out this session — fresh pairing is required.'))
+                console.log(chalk.yellow('   Start the bot again and pair with the QR code or pairing code. The SESSION_ID for this account is no longer valid.'))
                 return
             }
 

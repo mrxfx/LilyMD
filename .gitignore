@@ -21,6 +21,9 @@ temp/
 # Session files (WhatsApp credentials - never commit these)
 session/
 session-backup.txt
+session-backup.txt.hash
+session.invalid-*/
+.session-restore-*/
 baileys_store.json
 data/aiStyle.json.bak
 commit-msg.txt

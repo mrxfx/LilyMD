@@ -27,6 +27,25 @@ async function waitForSession(job) {
 
 async function pairCommand(sock, chatId, message, q) {
     try {
+        // A session backup is full access to the linked account: owner only, and
+        // never in a group where other members could read it.
+        if (String(chatId).endsWith('@g.us')) {
+            return await sock.sendMessage(chatId, {
+                text: '🔐 Pairing and session backups are private. Run `.pair` in a direct chat with the bot.',
+                ...channelInfo
+            });
+        }
+        const senderId = message?.key?.participant || message?.key?.remoteJid || chatId;
+        if (!message?.key?.fromMe) {
+            const isOwnerOrSudo = require('../lib/isOwner');
+            if (!(await isOwnerOrSudo(senderId, sock, chatId))) {
+                return await sock.sendMessage(chatId, {
+                    text: '🔐 Only the bot owner can pair another device.',
+                    ...channelInfo
+                });
+            }
+        }
+
         if (!q) {
             return await sock.sendMessage(chatId, {
                 text: 'Please provide a valid WhatsApp number\nExample: .pair 91702395XXXX',

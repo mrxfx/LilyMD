@@ -18,6 +18,7 @@
     "test:ai": "node scripts/test-ai-engine.js",
     "test:status": "node scripts/test-status-reaction.js",
     "test:db": "node scripts/test-db-scheduling.js",
+    "test:session": "node scripts/test-session.js",
     "db:check": "node scripts/db-check.js"
   },
   "keywords": [

@@ -90,7 +90,10 @@ Optional settings (all default to off/disabled):
 | `TENOR_API_KEY` | Tenor key(s) for `.gif` and `.emojimix`, comma-separated (a public fallback key is built in). |
 | `OPENWEATHER_API_KEY` | OpenWeather key for `.weather`. |
 | `OPENAI_API` / `GEMINI_API` / `CLAUDE_API` | Comma-separated provider keys used by AYHA when OpenRouter is unavailable. |
-| `SESSION_ID` | Base64 session backup to restore on boot (see below). |
+| `SESSION_ID` | Base64 session backup restored on boot (see **Session persistence**). |
+| `SESSION_BACKUP_INTERVAL_MS` | Periodic backup interval, default `21600000` (6 hours). |
+| `SESSION_BACKUP_DEBOUNCE_MS` | Delay after a credential change before the backup is rewritten, default `20000`. |
+| `SESSION_BACKUP_RETRY_MS` | Retry delay when WhatsApp rejects a backup document, default `600000`. |
 
 Bot name, owner, sticker pack name and API endpoints live in `settings.js`. AYHA memory and the schedule queue are stored in MySQL; small JSON caches and the WhatsApp session live under `data/` and `./session`. If MySQL is not configured the bot still runs and keeps memory in the local JSON cache, but scheduling needs the database.
 
@@ -105,8 +108,41 @@ Scan the QR code shown in the terminal with WhatsApp → Linked Devices, or gene
 ### Hosting
 
 - **2-in-1 server** — one process, one port: `GET /` is the pairing website and `GET /health` returns JSON (`status`, `connected`, `uptime`) for panels and uptime monitors. Nothing else needs to be hosted.
-- **Session restore** — after the first successful login, `session-backup.txt` is written (and refreshed every 6 hours). Paste its contents into `SESSION_ID` on your panel and the bot boots straight into the saved session instead of asking for a new QR scan.
+- **Session restore** — after the first successful login the session is backed up and sent to the bot's own chat as `LILY-MD-SESSION.txt` (see **Session persistence** below). Paste its contents into `SESSION_ID` and the bot boots straight into the saved session instead of asking for a new QR scan.
 - **Reconnects** — dropped connections retry with exponential backoff (2s → 60s) instead of a fixed delay, and uncaught errors are logged rather than crashing the process.
+
+### Session persistence
+
+Pair once, keep the account linked forever:
+
+1. **Pair** — first start shows a QR code, or use `.pair <number>` for a pairing code.
+   A pairing code only links the device; the session is what keeps it linked.
+2. **Backup** — `session/` is packed into `session-backup.txt` (gitignored) right
+   after the connection opens, again whenever Baileys writes new credentials
+   (debounced, 20s) and every 6 hours as a safety net. The file is `0600`.
+3. **Delivery** — the same archive is sent as **`LILY-MD-SESSION.txt`** to the
+   bot's own WhatsApp chat, with restore instructions inside. It is only re-sent
+   when the archive changed; a failed send is retried after 10 minutes.
+4. **Restore** — on a new/rebuilt server paste the file's contents into
+   `SESSION_ID`, start the bot, and it connects without a QR/pairing code.
+
+`SESSION_ID` is read before Baileys initialises. A **valid local session is never
+overwritten**, archives are checked (gzip, entry names, `creds.json`) before
+anything is extracted into an isolated directory, and path traversal or absolute
+entries are refused. Startup logs are one of:
+
+```
+🔐 Existing local session detected
+🔐 Session restored successfully from SESSION_ID
+⚠️ No valid saved session found. Pairing required.
+```
+
+Environment-variable restore is what survives a hosting provider deleting
+ephemeral container storage — OptikLink containers are recreated without
+`./session`, so `SESSION_ID` (or a re-uploaded `session-backup.txt`) is the only
+way back in. If WhatsApp unlinks the device (logged out / 401), the session is
+truly dead: the bot says so and you pair again; temporary disconnects, conflicts
+and crashes never delete `session/`.
 
 ### Pairing website (2-in-1)
 
