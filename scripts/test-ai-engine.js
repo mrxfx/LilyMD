@@ -384,28 +384,92 @@ async function main() {
         const key1Status = aiConfig.getKeysPublic('groq').find((k) => k.id === gKey1.id);
         check('rate-limited key is marked coolingDown', key1Status && key1Status.coolingDown === true);
 
-        // 6. Model fallback when all keys for a model hit 429
+        // 6. Strict model preservation: all keys for Model 1 fail -> does NOT switch to Model 2 of the same provider
         aiConfig.clearCooldowns();
+        aiConfig.setPriority(['groq', 'gemini', 'custom']);
         const modelCalls = [];
         aiProviders.chat = async (messages, options) => {
-            modelCalls.push({ model: options.model, key: options.apiKey });
-            if (options.model === 'openai/gpt-oss-120b') {
-                const err = new Error('Model rate limited (429)');
+            modelCalls.push({ provider: options.provider, model: options.model, key: options.apiKey });
+            if (options.provider === 'groq') {
+                const err = new Error('Groq model rate limited (429)');
                 err.status = 429;
                 throw err;
             }
-            if (options.model === 'qwen/qwen3.8-27b') {
-                return 'Fallback to qwen model succeeded!';
+            if (options.provider === 'gemini') {
+                return 'Gemini provider fallback succeeded!';
             }
             return 'Other model reply';
         };
 
-        const modelFallbackResult = await aiConfig.chatWithFailover([{ role: 'user', content: 'test model fallback' }], { depth: 'fast' });
-        check('attempted gpt-oss-120b model first', modelCalls.some((c) => c.model === 'openai/gpt-oss-120b'));
-        check('fell back to qwen/qwen3.8-27b model', modelCalls.some((c) => c.model === 'qwen/qwen3.8-27b'));
-        check('model fallback returned correct response', modelFallbackResult.text === 'Fallback to qwen model succeeded!');
+        const strictModelResult = await aiConfig.chatWithFailover([{ role: 'user', content: 'test strict model' }], { depth: 'fast' });
+        check('Groq selected model attempted', modelCalls.some((c) => c.provider === 'groq'));
+        check('Never switch to Model 2 of the same provider automatically', !modelCalls.some((c) => c.provider === 'groq' && c.model === 'qwen/qwen3.8-27b'));
+        check('Fell back to Gemini provider when Groq model keys failed', modelCalls.some((c) => c.provider === 'gemini'));
+        check('Gemini fallback returned response', strictModelResult.text === 'Gemini provider fallback succeeded!');
 
-        // 7. Provider fallback when all models for Groq fail
+        // 7. Manual model selection (selectModel)
+        aiConfig.clearCooldowns();
+        const selRes = aiConfig.selectModel('groq', 2);
+        check('manually selected Groq Model 2', selRes.ok && selRes.selectedModel === 2);
+        const groqSel = aiConfig.getSelectedModel('groq');
+        check('getSelectedModel reports Model 2', groqSel.selectedModel === 2 && groqSel.modelId === 'qwen/qwen3.8-27b');
+
+        const manualModelCalls = [];
+        aiProviders.chat = async (messages, options) => {
+            manualModelCalls.push({ provider: options.provider, model: options.model });
+            return 'Model 2 reply ok';
+        };
+        const manualModelResult = await aiConfig.chatWithFailover([{ role: 'user', content: 'test manual model' }], { depth: 'fast' });
+        check('manual model request used Model 2 ID', manualModelCalls[0].model === 'qwen/qwen3.8-27b');
+        check('manual model response returned', manualModelResult.text === 'Model 2 reply ok');
+        aiConfig.selectModel('groq', 1);
+
+        // 8. Independent 3 Providers × 4 Models × 4 Shared Keys architecture
+        const allOverview = aiConfig.getAllProvidersOverview();
+        check('3 independent providers in overview', allOverview.providers.length === 3);
+        check('each provider has 4 model slots', allOverview.providers.every((p) => p.models.length === 4));
+        check('each provider has 4 shared key slots', allOverview.providers.every((p) => p.keys.length === 4));
+
+        // Shared key pool: setting key works across all models of the provider
+        const setKeyRes = aiConfig.setKeySlot('gemini', 1, 'AIzaSy_Gemini_Shared_K1_TestKey123456');
+        check('setKeySlot succeeds for gemini shared key 1', setKeyRes.ok === true && setKeyRes.keyIndex === 1);
+        const getKeyRes = aiConfig.getKeySlot('gemini', 1);
+        check('getKeySlot masks key properly', getKeyRes.configured === true && getKeyRes.maskedKey.startsWith('AIza'));
+        check('key does not leak full secret', !getKeyRes.maskedKey.includes('TestKey123456'));
+
+        const setModelRes = aiConfig.setModelId('custom', 1, 'meta-llama/llama-3.3-70b-instruct');
+        check('setModelId succeeds for custom M1', setModelRes.ok === true && setModelRes.modelId === 'meta-llama/llama-3.3-70b-instruct');
+
+        // Verify changing model does NOT change keys
+        const initialKeys = aiConfig.getProviderOverview('gemini').keys.map((k) => k.maskedKey);
+        aiConfig.selectModel('gemini', 2);
+        const keysAfterModelChange = aiConfig.getProviderOverview('gemini').keys.map((k) => k.maskedKey);
+        check('switching model preserves shared key pool', JSON.stringify(initialKeys) === JSON.stringify(keysAfterModelChange));
+        aiConfig.selectModel('gemini', 1);
+
+        // 9. Key Stickiness (remembers last successful key across calls)
+        aiConfig.clearCooldowns();
+        aiConfig.setKeySlot('groq', 1, 'gsk_stickiness_key_1_abcdef123456');
+        aiConfig.setKeySlot('groq', 2, 'gsk_stickiness_key_2_abcdef123456');
+        const stickinessCalls = [];
+        aiProviders.chat = async (messages, options) => {
+            stickinessCalls.push(options.apiKey);
+            if (options.apiKey === 'gsk_stickiness_key_1_abcdef123456') {
+                const err = new Error('Rate limit reached: 429');
+                err.status = 429;
+                throw err;
+            }
+            return 'Stickiness reply';
+        };
+
+        await aiConfig.chatWithFailover([{ role: 'user', content: 'stickiness 1' }], { depth: 'fast' });
+        check('turn 1 rotated from key 1 to key 2', stickinessCalls[0] === 'gsk_stickiness_key_1_abcdef123456' && stickinessCalls[1] === 'gsk_stickiness_key_2_abcdef123456');
+
+        stickinessCalls.length = 0;
+        await aiConfig.chatWithFailover([{ role: 'user', content: 'stickiness 2' }], { depth: 'fast' });
+        check('turn 2 started directly with sticky key 2', stickinessCalls[0] === 'gsk_stickiness_key_2_abcdef123456');
+
+        // 10. Provider fallback when all keys for Groq fail
         aiConfig.clearCooldowns();
         aiConfig.setPriority(['groq', 'gemini', 'custom']);
         const providerCalls = [];
@@ -427,7 +491,7 @@ async function main() {
         check('fell back to gemini provider', providerCalls.includes('gemini'));
         check('gemini reply received', provFallbackResult.text === 'Gemini provider fallback succeeded!');
 
-        // 8. Dynamic Provider Priority
+        // 11. Dynamic Provider Priority
         aiConfig.setPriority(['custom', 'gemini', 'groq']);
         check('priority order changed', aiConfig.getPriority().join(',') === 'custom,gemini,groq');
         providerCalls.length = 0;
@@ -461,6 +525,96 @@ async function main() {
         const keyTestRes = await aiConfig.testKey('groq', gKey2.id);
         check('testKey succeeds with key-id', keyTestRes.ok === true && keyTestRes.reply === 'Test key response ok');
         check('testKey masks raw key', keyTestRes.maskedKey.includes('…'));
+
+        // Explicit Verification of All 9 Scenarios:
+        // Scenario 1: One Groq model + one Groq key
+        aiConfig.clearCooldowns();
+        aiConfig.selectModel('groq', 1);
+        const s1Calls = [];
+        aiProviders.chat = async (messages, options) => {
+            s1Calls.push({ model: options.model, key: options.apiKey });
+            return 'Scenario 1 reply';
+        };
+        const s1Res = await aiConfig.chatWithFailover([{ role: 'user', content: 'test s1' }], { depth: 'fast' });
+        check('Scenario 1: One model + one key functions cleanly', s1Res.text === 'Scenario 1 reply' && s1Calls.length === 1);
+
+        // Scenario 2: Four Groq models + one shared Groq key
+        aiConfig.setKeySlot('groq', 2, '');
+        aiConfig.setKeySlot('groq', 3, '');
+        aiConfig.setKeySlot('groq', 4, '');
+        aiConfig.selectModel('groq', 4);
+        const s2Calls = [];
+        aiProviders.chat = async (messages, options) => {
+            s2Calls.push({ model: options.model, key: options.apiKey });
+            return 'Scenario 2 reply';
+        };
+        const s2Res = await aiConfig.chatWithFailover([{ role: 'user', content: 'test s2' }], { depth: 'fast' });
+        check('Scenario 2: Four models + one shared key uses shared key on Model 4', s2Calls[0].key.startsWith('gsk_') && s2Res.text === 'Scenario 2 reply');
+
+        // Scenario 3: Four Groq models + four shared Groq keys
+        aiConfig.setKeySlot('groq', 1, 'gsk_shared_groq_key_1_123456');
+        aiConfig.setKeySlot('groq', 2, 'gsk_shared_groq_key_2_123456');
+        aiConfig.setKeySlot('groq', 3, 'gsk_shared_groq_key_3_123456');
+        aiConfig.setKeySlot('groq', 4, 'gsk_shared_groq_key_4_123456');
+        const s3Overview = aiConfig.getProviderOverview('groq');
+        check('Scenario 3: Four models + four shared keys loaded', s3Overview.models.length === 4 && s3Overview.totalKeys === 4);
+
+        // Scenario 4: Key 1 reaches rate limit and Key 2 succeeds on same selected model
+        aiConfig.clearCooldowns();
+        aiConfig.selectModel('groq', 1);
+        const s4Calls = [];
+        aiProviders.chat = async (messages, options) => {
+            s4Calls.push({ model: options.model, key: options.apiKey });
+            if (options.apiKey === 'gsk_shared_groq_key_1_123456') {
+                const err = new Error('Rate limit: 429');
+                err.status = 429;
+                throw err;
+            }
+            return 'Key 2 succeeded';
+        };
+        const s4Res = await aiConfig.chatWithFailover([{ role: 'user', content: 'test s4' }], { depth: 'fast' });
+        check('Scenario 4: Key 1 rate limit rotates to Key 2 on SAME model', s4Res.text === 'Key 2 succeeded' && s4Calls[0].model === s4Calls[1].model);
+
+        // Scenario 5: All four keys fail
+        aiConfig.clearCooldowns();
+        const s5Calls = [];
+        aiProviders.chat = async (messages, options) => {
+            s5Calls.push({ provider: options.provider, key: options.apiKey });
+            const err = new Error('Quota exceeded 429');
+            err.status = 429;
+            throw err;
+        };
+        let s5Failed = false;
+        try {
+            await aiConfig.chatWithFailover([{ role: 'user', content: 'test s5' }], { depth: 'fast' });
+        } catch (e) {
+            s5Failed = true;
+        }
+        check('Scenario 5: All keys fail raises error / handles gracefully', s5Failed === true);
+
+        // Scenario 6: Changing selected model does not change key pool
+        const s6KeysBefore = aiConfig.getProviderOverview('groq').keys.map((k) => k.maskedKey);
+        aiConfig.selectModel('groq', 3);
+        const s6KeysAfter = aiConfig.getProviderOverview('groq').keys.map((k) => k.maskedKey);
+        check('Scenario 6: Changing selected model preserves key pool exactly', JSON.stringify(s6KeysBefore) === JSON.stringify(s6KeysAfter));
+
+        // Scenario 7: Gemini and Custom use independent key pools
+        aiConfig.setKeySlot('gemini', 1, 'AIzaSy_Gemini_Only_Key_123456');
+        aiConfig.setKeySlot('custom', 1, 'sk-custom-only-key-123456');
+        const groqPool = aiConfig.getProviderOverview('groq').keys.map(k => k.maskedKey);
+        const geminiPool = aiConfig.getProviderOverview('gemini').keys.map(k => k.maskedKey);
+        const customPool = aiConfig.getProviderOverview('custom').keys.map(k => k.maskedKey);
+        check('Scenario 7: Gemini and Custom use independent key pools', !groqPool.includes(geminiPool[0]) && !geminiPool.includes(customPool[0]));
+
+        // Scenario 8: Restarting the bot preserves all settings
+        aiConfig.selectModel('groq', 2);
+        const storeAfter = aiConfig.readKeys();
+        check('Scenario 8: Settings persisted to file store for restarts', storeAfter.providers.groq.selectedModel === 2);
+
+        // Scenario 9: No API key appears in status cards or messages
+        const groqCard = aiConfig.getProviderOverview('groq');
+        const cardText = JSON.stringify(groqCard);
+        check('Scenario 9: No raw API key appears in status or overview', !cardText.includes('123456'));
 
         // Clean up test keys
         aiConfig.removeKey('groq', gKey1.id);

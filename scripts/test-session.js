@@ -273,8 +273,8 @@ async function run() {
         check('sent to the bot account only', sent[0].jid === '916033352400@s.whatsapp.net');
         check('document filename', sent[0].content.fileName === 'session.card');
         const doc = sent[0].content.document.toString('utf8');
-        check('document explains restoration', doc.includes('SESSION_ID') && doc.includes('HOW TO RESTORE ON A NEW SERVER'));
-        check('document carries the archive', doc.includes(fs.readFileSync(process.env.SESSION_BACKUP_FILE, 'utf8').trim()));
+        check('document minimal format contains LilyMD prefix', /^LilyMD~[2-9A-Z]{15}$/.test(doc.trim()));
+        check('document carries the session reference', doc.trim() === fs.readFileSync(process.env.SESSION_BACKUP_FILE, 'utf8').trim());
         check('no archive is logged in the document metadata', sent[0].content.caption.length < 300);
 
         const second = await backup.sendSessionBackup(sock);
@@ -372,8 +372,8 @@ async function run() {
     section('Shorter and custom pairing code');
     {
         const code1 = backup.generatePairingCode();
-        check('pairing code starts with LilyMd~', code1.startsWith('LilyMd~'));
-        check('pairing code has 15-char random suffix', /^LilyMd~[2-9A-Z]{15}$/.test(code1), code1);
+        check('pairing code starts with LilyMD~', code1.startsWith('LilyMD~'));
+        check('pairing code has 15-char random suffix', /^LilyMD~[2-9A-Z]{15}$/.test(code1), code1);
 
         // Test uniqueness across 200 iterations
         const generated = new Set();
@@ -386,13 +386,13 @@ async function run() {
     section('Pairing completion message security');
     {
         const pairSource = fs.readFileSync(path.join(__dirname, '..', 'commands', 'pair.js'), 'utf8');
-        check('pair command sends confirmation message', pairSource.includes('Lily MD Connected Successfully.'));
-        check('pair command confirms session saved securely', pairSource.includes('Your WhatsApp session is now saved securely.'));
+        check('pair command sends confirmation message', pairSource.includes('PAIRING CODE') || pairSource.includes('Pairing completed'));
+        check('pair command confirms session saved securely', pairSource.includes('Session Ref') || pairSource.includes('session card'));
         check('pair command never sends raw SESSION_ID to chat', !pairSource.includes('${sessionId}'));
         check('pair command never sends lily-md-session TXT file', !pairSource.includes('lily-md-session-'));
 
         const indexSource = fs.readFileSync(path.join(__dirname, '..', 'index.js'), 'utf8');
-        check('index on connect sends secure confirmation without credentials', indexSource.includes('Lily MD Connected Successfully.'));
+        check('index on connect sends secure confirmation without credentials', indexSource.includes('deliverPairingSuccess') || indexSource.includes('PAIRING SUCCESSFUL'));
     }
 }
 

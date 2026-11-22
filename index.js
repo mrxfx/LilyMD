@@ -278,8 +278,10 @@ async function startXeonBotInc() {
 
     XeonBotInc.serializeM = (m) => smsg(XeonBotInc, m, store)
 
+    let isFreshPairing = false;
     // Handle pairing code
     if (pairingCode && !XeonBotInc.authState.creds.registered) {
+        isFreshPairing = true;
         if (useMobile) throw new Error('Cannot use pairing code with mobile api')
 
         let phoneNumber
@@ -328,6 +330,11 @@ async function startXeonBotInc() {
         
         if (connection == "open") {
             currentSock = XeonBotInc
+            try {
+                const { setMainSocket } = require('./lib/webApp');
+                if (typeof setMainSocket === 'function') setMainSocket(XeonBotInc);
+            } catch {}
+
             console.log(chalk.magenta(` `))
             console.log(chalk.yellow(`🌿Connected to => ` + JSON.stringify(XeonBotInc.user, null, 2)))
 
@@ -337,17 +344,17 @@ async function startXeonBotInc() {
                 clearTimeout(reconnectTimer)
                 reconnectTimer = null
             }
-            // Backup + deliver a restorable SESSION_ID document to the owner.
+            // Backup + persist session securely
             sessionBackup.startBackups({ getSock: () => currentSock })
 
-            try {
-                const botNumber = XeonBotInc.user.id.split(':')[0] + '@s.whatsapp.net';
-                await XeonBotInc.sendMessage(botNumber, {
-                    text: `Lily MD Connected Successfully.\n\nYour WhatsApp session is now saved securely.`,
-                    ...channelInfo
-                });
-            } catch (error) {
-                console.error('Error sending connection message:', error.message)
+            if (isFreshPairing) {
+                isFreshPairing = false;
+                try {
+                    const botNumber = XeonBotInc.user.id.split(':')[0];
+                    await sessionBackup.deliverPairingSuccess(XeonBotInc, botNumber);
+                } catch (error) {
+                    console.error('Error delivering pairing completion:', error.message);
+                }
             }
 
             await delay(1999)

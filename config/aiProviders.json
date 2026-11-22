@@ -1,5 +1,6 @@
 {
-  "version": 1,
+  "version": 2,
+  "providerPriority": ["groq", "gemini", "custom"],
   "order": ["primary", "fallback1", "fallback2"],
   "fast": { "maxTokens": 320, "timeoutMs": 22000 },
   "detailed": { "maxTokens": 1100, "timeoutMs": 90000 },
@@ -7,10 +8,10 @@
     {
       "id": "primary",
       "label": "Primary",
-      "provider": "openrouter",
-      "baseUrl": "https://openrouter.ai/api/v1",
-      "model": "openrouter/free",
-      "apiKeyEnv": "AI_PRIMARY_API_KEY",
+      "provider": "groq",
+      "baseUrl": "https://api.groq.com/openai/v1",
+      "model": "openai/gpt-oss-20b",
+      "apiKeyEnv": "GROQ_API_KEY",
       "vision": false,
       "enabled": true
     },
@@ -19,20 +20,20 @@
       "label": "Fallback 1",
       "provider": "gemini",
       "baseUrl": "https://generativelanguage.googleapis.com/v1beta",
-      "model": "gemini-2.0-flash",
-      "apiKeyEnv": "AI_FALLBACK_1_API_KEY",
+      "model": "gemini-3.6-flash",
+      "apiKeyEnv": "GEMINI_API_KEY",
       "vision": true,
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "fallback2",
       "label": "Fallback 2",
       "provider": "custom",
-      "baseUrl": "",
-      "model": "",
-      "apiKeyEnv": "AI_FALLBACK_2_API_KEY",
+      "baseUrl": "https://openrouter.ai/api/v1",
+      "model": "openrouter/free",
+      "apiKeyEnv": "OPENROUTER_API_KEY",
       "vision": false,
-      "enabled": false
+      "enabled": true
     }
   ]
 }

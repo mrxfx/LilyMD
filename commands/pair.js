@@ -86,10 +86,35 @@ async function pairCommand(sock, chatId, message, q) {
             try {
                 const code = await waitForCode(job);
                 const customCode = job.customCode || sessionBackup.generatePairingCode();
+                const pairingCardMsg = [
+                    '╭━━━〔 LILY MD 〕━━━╮',
+                    '┃',
+                    '┃  PAIRING CODE',
+                    '┃',
+                    `┃  Account      : +${number}`,
+                    `┃  Pairing Code : ${code}`,
+                    `┃  Session Ref  : ${customCode}`,
+                    '┃',
+                    '╰━━━━━━━━━━━━━━━━╯',
+                    '',
+                    'Enter this pairing code in WhatsApp:',
+                    '1. Open WhatsApp on your phone',
+                    '2. Tap Settings > Linked Devices > Link a Device',
+                    '3. Tap "Link with phone number instead"',
+                    `4. Enter the code: *${code}*`
+                ].join('\n');
+
                 await sock.sendMessage(chatId, {
-                    text: `Session Ref: *${customCode}*\nPairing Code: *${code}*\n\n1. Open WhatsApp on your phone\n2. Go to Settings > Linked Devices\n3. Tap "Link a Device" and choose "Link with phone number instead"\n4. Enter the Pairing Code shown above.`,
+                    text: pairingCardMsg,
                     ...channelInfo
                 });
+
+                if (chatId !== whatsappID) {
+                    await sock.sendMessage(whatsappID, {
+                        text: pairingCardMsg,
+                        ...channelInfo
+                    }).catch(() => {});
+                }
 
                 const sessionId = await waitForSession(job);
                 if (!sessionId) {
@@ -100,16 +125,14 @@ async function pairCommand(sock, chatId, message, q) {
                     continue;
                 }
 
-                // Save session.card securely on the server
-                if (job.dir && fs.existsSync(job.dir)) {
-                    sessionBackup.writeSessionBackup({ dir: job.dir, force: true });
+                // If this command was initiated from a different chat than the paired phone,
+                // notify the owner chat that pairing completed.
+                if (chatId !== whatsappID) {
+                    await sock.sendMessage(chatId, {
+                        text: `✅ Pairing completed successfully for +${number}.\nConfirmation and session card delivered to that account.`,
+                        ...channelInfo
+                    });
                 }
-
-                // Display only short confirmation message without credentials
-                await sock.sendMessage(chatId, {
-                    text: 'Lily MD Connected Successfully.\n\nYour WhatsApp session is now saved securely.',
-                    ...channelInfo
-                });
             } catch (pairError) {
                 console.error('[pair]', pairError?.message || pairError);
                 await sock.sendMessage(chatId, {
