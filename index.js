@@ -91,16 +91,37 @@ const useMobile = process.argv.includes("--mobile")
 // Connection state + reconnect backoff
 let isConnected = false
 let currentSock = null
+let activeSock = null
 let reconnectAttempts = 0
 let reconnectTimer = null
+let pairingCodeRequested = false
+let pendingFreshPairing = false
+let credsSavePromise = Promise.resolve()
 
-function scheduleReconnect(start) {
-    if (reconnectTimer) return
-    const wait = Math.min(2000 * 2 ** Math.min(reconnectAttempts, 4), 60000)
-    reconnectAttempts += 1
-    console.log(chalk.yellow(`🔄 Reconnecting in ${Math.round(wait / 1000)}s (attempt ${reconnectAttempts})`))
-    reconnectTimer = setTimeout(() => {
+function sanitizeDisconnectReason(lastDisconnect) {
+    if (!lastDisconnect || !lastDisconnect.error) return 'normal closure'
+    const error = lastDisconnect.error
+    const statusCode = error?.output?.statusCode || error?.status || error?.statusCode
+    const message = error?.message || String(error)
+    const cleanMsg = message.replace(/(?:bearer\s+|key=|token=)[a-zA-Z0-9_\-\.\/+=]+/gi, '[REDACTED]').slice(0, 150)
+    return `status ${statusCode || 'none'} (${cleanMsg})`
+}
+
+function scheduleReconnect(start, immediate = false) {
+    if (immediate && reconnectTimer) {
+        clearTimeout(reconnectTimer)
         reconnectTimer = null
+    } else if (reconnectTimer) {
+        return
+    }
+    const wait = immediate ? 150 : Math.min(2000 * 2 ** Math.min(reconnectAttempts, 4), 60000)
+    if (!immediate) reconnectAttempts += 1
+    console.log(chalk.yellow(`🔄 Reconnecting in ${immediate ? '0.15' : Math.round(wait / 1000)}s${immediate ? ' (stream restart)' : ` (attempt ${reconnectAttempts})`}`))
+    reconnectTimer = setTimeout(async () => {
+        reconnectTimer = null
+        try {
+            await credsSavePromise
+        } catch {}
         start()
     }, wait)
 }
@@ -146,6 +167,17 @@ async function bootstrapDatabase() {
 
 async function startXeonBotInc() {
     try {
+        if (activeSock) {
+            try {
+                activeSock.ev?.removeAllListeners('connection.update');
+                activeSock.ev?.removeAllListeners('creds.update');
+                activeSock.ev?.removeAllListeners('messages.upsert');
+                activeSock.ws?.close();
+                activeSock.end?.(undefined);
+            } catch {}
+            activeSock = null;
+        }
+
         // Restore SESSION_ID (when needed) before Baileys reads ./session.
         sessionBackup.restoreSessionFromEnv()
         await bootstrapDatabase().catch((error) => console.error('[db] bootstrap failed:', database.safeError(error)))
@@ -156,7 +188,7 @@ async function startXeonBotInc() {
         const XeonBotInc = makeWASocket({
             version,
             logger: pino({ level: 'silent' }),
-            printQRInTerminal: !pairingCode,
+            printQRInTerminal: !pairingCode && !state.creds.registered,
             browser: ["Ubuntu", "Chrome", "20.0.04"],
             auth: {
                 creds: state.creds,
@@ -175,13 +207,21 @@ async function startXeonBotInc() {
             connectTimeoutMs: 60000,
             keepAliveIntervalMs: 10000,
         })
+        activeSock = XeonBotInc
 
-        // Save credentials when they update, then refresh the portable backup
-        // (debounced) and re-deliver it to the owner's chat when it changed.
-        XeonBotInc.ev.on('creds.update', saveCreds)
+        // Save credentials when they update (chained to guarantee persistence before restart)
+        XeonBotInc.ev.on('creds.update', () => {
+            credsSavePromise = credsSavePromise.then(async () => {
+                try {
+                    await saveCreds();
+                } catch (err) {
+                    console.error('[auth] saveCreds error:', err?.message || err);
+                }
+            });
+        })
         XeonBotInc.ev.on('creds.update', () => {
             try {
-                sessionBackup.onCredentialsUpdated({ getSock: () => currentSock })
+                sessionBackup.onCredentialsUpdated({ getSock: () => currentSock || XeonBotInc })
             } catch (error) {
                 console.error('[session] backup refresh failed:', error?.message || error)
             }
@@ -278,39 +318,43 @@ async function startXeonBotInc() {
 
     XeonBotInc.serializeM = (m) => smsg(XeonBotInc, m, store)
 
-    let isFreshPairing = false;
     // Handle pairing code
-    if (pairingCode && !XeonBotInc.authState.creds.registered) {
-        isFreshPairing = true;
+    if (pairingCode && !state.creds.registered && !pairingCodeRequested) {
+        pairingCodeRequested = true;
+        pendingFreshPairing = true;
         if (useMobile) throw new Error('Cannot use pairing code with mobile api')
 
-        let phoneNumber
+        let targetNumber
         if (!!global.phoneNumber) {
-            phoneNumber = global.phoneNumber
+            targetNumber = global.phoneNumber
         } else {
-            phoneNumber = await question(chalk.bgBlack(chalk.greenBright(`Please type your WhatsApp number 😍\nFormat: 6281376552730 (without + or spaces) : `)))
+            targetNumber = await question(chalk.bgBlack(chalk.greenBright(`Please type your WhatsApp number 😍\nFormat: 6281376552730 (without + or spaces) : `)))
         }
 
         // Clean the phone number - remove any non-digit characters
-        phoneNumber = phoneNumber.replace(/[^0-9]/g, '')
+        targetNumber = targetNumber.replace(/[^0-9]/g, '')
 
         // Validate the phone number using awesome-phonenumber
         const pn = require('awesome-phonenumber');
-        if (!pn('+' + phoneNumber).isValid()) {
+        if (!pn('+' + targetNumber).isValid()) {
             console.log(chalk.red('Invalid phone number. Please enter your full international number (e.g., 15551234567 for US, 447911123456 for UK, etc.) without + or spaces.'));
+            pairingCodeRequested = false;
+            pendingFreshPairing = false;
             process.exit(1);
         }
 
         setTimeout(async () => {
             try {
-                let code = await XeonBotInc.requestPairingCode(phoneNumber)
+                let code = await XeonBotInc.requestPairingCode(targetNumber)
                 code = code?.match(/.{1,4}/g)?.join("-") || code
                 const customCode = sessionBackup.generatePairingCode()
                 console.log(chalk.black(chalk.bgCyan(`Session Ref : `)), chalk.black(chalk.white(customCode)))
                 console.log(chalk.black(chalk.bgGreen(`Your Pairing Code : `)), chalk.black(chalk.white(code)))
                 console.log(chalk.yellow(`\nPlease enter this code in your WhatsApp app:\n1. Open WhatsApp\n2. Go to Settings > Linked Devices\n3. Tap "Link a Device"\n4. Enter the code shown above`))
             } catch (error) {
-                console.error('Error requesting pairing code:', error)
+                pairingCodeRequested = false;
+                pendingFreshPairing = false;
+                console.error('Error requesting pairing code:', error?.message || error)
                 console.log(chalk.red('Failed to get pairing code. Please check your phone number and try again.'))
             }
         }, 3000)
@@ -320,7 +364,7 @@ async function startXeonBotInc() {
     XeonBotInc.ev.on('connection.update', async (s) => {
         const { connection, lastDisconnect, qr } = s
         
-        if (qr) {
+        if (qr && !state.creds.registered) {
             console.log(chalk.yellow('📱 QR Code generated. Please scan with WhatsApp.'))
         }
         
@@ -330,28 +374,33 @@ async function startXeonBotInc() {
         
         if (connection == "open") {
             currentSock = XeonBotInc
+            isConnected = true
+            reconnectAttempts = 0
+            pairingCodeRequested = false
+            if (reconnectTimer) {
+                clearTimeout(reconnectTimer)
+                reconnectTimer = null
+            }
+
             try {
                 const { setMainSocket } = require('./lib/webApp');
                 if (typeof setMainSocket === 'function') setMainSocket(XeonBotInc);
             } catch {}
 
             console.log(chalk.magenta(` `))
-            console.log(chalk.yellow(`🌿Connected to => ` + JSON.stringify(XeonBotInc.user, null, 2)))
+            const connectedId = XeonBotInc.user?.id ? XeonBotInc.user.id.split(':')[0] : 'WhatsApp User'
+            console.log(chalk.yellow(`🌿 Connected as => ${connectedId}`))
 
-            isConnected = true
-            reconnectAttempts = 0
-            if (reconnectTimer) {
-                clearTimeout(reconnectTimer)
-                reconnectTimer = null
-            }
             // Backup + persist session securely
             sessionBackup.startBackups({ getSock: () => currentSock })
 
-            if (isFreshPairing) {
-                isFreshPairing = false;
+            if (pendingFreshPairing) {
+                pendingFreshPairing = false;
                 try {
-                    const botNumber = XeonBotInc.user.id.split(':')[0];
-                    await sessionBackup.deliverPairingSuccess(XeonBotInc, botNumber);
+                    const botNumber = XeonBotInc.user?.id ? XeonBotInc.user.id.split(':')[0].replace(/[^0-9]/g, '') : '';
+                    if (botNumber) {
+                        await sessionBackup.deliverPairingSuccess(XeonBotInc, botNumber);
+                    }
                 } catch (error) {
                     console.error('Error delivering pairing completion:', error.message);
                 }
@@ -370,8 +419,12 @@ async function startXeonBotInc() {
         
         if (connection === 'close') {
             isConnected = false
-            const statusCode = lastDisconnect?.error?.output?.statusCode
+            if (currentSock === XeonBotInc) currentSock = null
+            if (activeSock === XeonBotInc) activeSock = null
+
+            const statusCode = lastDisconnect?.error?.output?.statusCode || lastDisconnect?.error?.statusCode
             const errMsg = String(lastDisconnect?.error?.message || lastDisconnect?.error || '')
+            const isRestart = statusCode === DisconnectReason.restartRequired || statusCode === 515
             const isLoggedOut = statusCode === DisconnectReason.loggedOut || statusCode === 401
             const isConflict =
                 statusCode === DisconnectReason.connectionReplaced ||
@@ -379,7 +432,7 @@ async function startXeonBotInc() {
                 /conflict|replaced/i.test(errMsg)
             const shouldReconnect = !isLoggedOut && !isConflict
 
-            console.log(chalk.red(`Connection closed due to ${lastDisconnect?.error}, reconnecting ${shouldReconnect}`))
+            console.log(chalk.red(`Connection closed: ${sanitizeDisconnectReason(lastDisconnect)}, reconnecting: ${shouldReconnect}`))
 
             if (isConflict) {
                 // Another WhatsApp Web / bot instance took the session — do NOT wipe auth
@@ -389,8 +442,8 @@ async function startXeonBotInc() {
             }
 
             if (isLoggedOut) {
-                // WhatsApp invalidated this session (unlinked from the phone).
-                // A stale SESSION_ID cannot help; fresh pairing is required.
+                pairingCodeRequested = false
+                pendingFreshPairing = false
                 try {
                     rmSync('./session', { recursive: true, force: true })
                     console.log(chalk.yellow('Session folder removed (WhatsApp unlinked this device).'))
@@ -403,7 +456,7 @@ async function startXeonBotInc() {
             }
 
             if (shouldReconnect) {
-                scheduleReconnect(startXeonBotInc)
+                scheduleReconnect(startXeonBotInc, isRestart)
             }
         }
     })
