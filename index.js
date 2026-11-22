@@ -234,7 +234,26 @@ async function startXeonBotInc() {
         try {
             const mek = chatUpdate.messages[0]
             if (!mek.message) return
-            mek.message = (Object.keys(mek.message)[0] === 'ephemeralMessage') ? mek.message.ephemeralMessage.message : mek.message
+
+            // Preserve disappearing messages expiration metadata
+            if (mek.message.ephemeralMessage) {
+                const eph = mek.message.ephemeralMessage
+                const innerMsg = eph?.message || {}
+                const mtype = Object.keys(innerMsg)[0]
+                const expiration = eph?.contextInfo?.expiration
+                    || innerMsg?.[mtype]?.contextInfo?.expiration
+                    || 86400
+                mek.isEphemeral = true
+                mek.expiration = expiration
+                mek.message = innerMsg
+            } else {
+                const mtype = Object.keys(mek.message)[0]
+                const ctx = mek.message[mtype]?.contextInfo
+                if (ctx?.expiration) {
+                    mek.isEphemeral = true
+                    mek.expiration = ctx.expiration
+                }
+            }
             if (mek.key && mek.key.remoteJid === 'status@broadcast') {
                 await handleStatus(XeonBotInc, chatUpdate);
                 return;
@@ -366,6 +385,7 @@ async function startXeonBotInc() {
         
         if (qr && !state.creds.registered) {
             console.log(chalk.yellow('📱 QR Code generated. Please scan with WhatsApp.'))
+            pendingFreshPairing = true;
         }
         
         if (connection === 'connecting') {
@@ -399,7 +419,9 @@ async function startXeonBotInc() {
                 try {
                     const botNumber = XeonBotInc.user?.id ? XeonBotInc.user.id.split(':')[0].replace(/[^0-9]/g, '') : '';
                     if (botNumber) {
-                        await sessionBackup.deliverPairingSuccess(XeonBotInc, botNumber);
+                        await sessionBackup.deliverPairingSuccess(XeonBotInc, botNumber, {
+                            platform: process.env.PLATFORM || (process.platform === 'linux' ? 'Linux' : (process.platform === 'win32' ? 'Windows' : 'Server'))
+                        });
                     }
                 } catch (error) {
                     console.error('Error delivering pairing completion:', error.message);

@@ -1,6 +1,6 @@
 const APIs = require('../lib/api');
 const aiConfig = require('../lib/aiConfig');
-const { buildSystemPrompt, getRuntime } = require('../lib/aiAutoReply');
+const { buildSystemPrompt, getRuntime, DEFAULT_GREETING, isPureGreeting, getEphemeralExpiration } = require('../lib/aiAutoReply');
 const isOwnerOrSudo = require('../lib/isOwner');
 const { checkAiLimit, recordAiUse, limitMessage } = require('../lib/aiLimit');
 
@@ -31,37 +31,41 @@ async function aiCommand(sock, chatId, message) {
     await sock.sendMessage(chatId, { react: { text: '🤖', key: message.key } });
 
     let answer;
-    // Provider, model and key as selected in the dashboard / .aisetkey
-    const runtime = getRuntime();
-    const steps = [
-      [
-        `AYHA (${runtime.provider})`,
-        async () =>
-          (
-            await aiConfig.chatWithFailover(
-              [
-                // The agent, custom instructions and style picked in the dashboard
-                { role: 'system', content: buildSystemPrompt() },
-                { role: 'user', content: query },
-              ],
-              { depth: 'detailed' }
-            )
-          ).text,
-      ],
-      ['Knight chat', () => APIs.knightChatAI(query)],
-      ['Knight gpt', () => APIs.knightGptAI(query)],
-      ['fallback', () => APIs.fallbackChatAI(query)],
-    ];
+    if (isPureGreeting(query)) {
+      answer = DEFAULT_GREETING;
+    } else {
+      // Provider, model and key as selected in the dashboard / .aisetkey
+      const runtime = getRuntime();
+      const steps = [
+        [
+          `AYHA (${runtime.provider})`,
+          async () =>
+            (
+              await aiConfig.chatWithFailover(
+                [
+                  // The agent, custom instructions and style picked in the dashboard
+                  { role: 'system', content: buildSystemPrompt(null, { userQuery: query }) },
+                  { role: 'user', content: query },
+                ],
+                { depth: 'detailed' }
+              )
+            ).text,
+        ],
+        ['Knight chat', () => APIs.knightChatAI(query)],
+        ['Knight gpt', () => APIs.knightGptAI(query)],
+        ['fallback', () => APIs.fallbackChatAI(query)],
+      ];
 
-    for (const [name, run] of steps) {
-      try {
-        answer = await run();
-        if (answer) {
-          console.log(`[ai] OK via ${name}`);
-          break;
+      for (const [name, run] of steps) {
+        try {
+          answer = await run();
+          if (answer) {
+            console.log(`[ai] OK via ${name}`);
+            break;
+          }
+        } catch (err) {
+          console.log(`[ai] ${name} failed:`, err?.message || err);
         }
-      } catch (err) {
-        console.log(`[ai] ${name} failed:`, err?.message || err);
       }
     }
 
@@ -74,7 +78,10 @@ async function aiCommand(sock, chatId, message) {
     }
 
     if (!isPrivileged) recordAiUse(senderId);
-    await sock.sendMessage(chatId, { text: answer }, { quoted: message });
+    const exp = typeof getEphemeralExpiration === 'function' ? getEphemeralExpiration(message, chatId) : 0;
+    const sendOptions = { quoted: message };
+    if (exp > 0) sendOptions.ephemeralExpiration = exp;
+    await sock.sendMessage(chatId, { text: answer }, sendOptions);
   } catch (err) {
     console.error('[ai]', err?.message || err);
     await sock.sendMessage(

@@ -239,6 +239,90 @@ async function run() {
         check('Status code preserved in sanitized message', sanitized.includes('status 500'));
     }
 
+    // Section 6: Shared Confirmation Message & Dashboard Password Uniformity
+    section('6. Shared Confirmation Message & Dashboard Password Uniformity');
+    {
+        const sessionBackup = require('../lib/sessionBackup');
+        const auth = require('../lib/webAuth');
+
+        const serverSentMessages = [];
+        const mockServerSock = {
+            sendMessage: async (jid, content) => {
+                serverSentMessages.push({ jid, content });
+                return { key: { id: 'srv-msg-1' } };
+            }
+        };
+
+        const webSentMessages = [];
+        const mockWebSock = {
+            sendMessage: async (jid, content) => {
+                webSentMessages.push({ jid, content });
+                return { key: { id: 'web-msg-1' } };
+            }
+        };
+
+        const testNumber = '916033352400';
+
+        // 1. Execute Server Pairing Confirmation
+        const serverResult = await sessionBackup.deliverPairingSuccess(mockServerSock, testNumber, {
+            sessionId: 'LilyMD~SERVERTEST12345',
+            platform: 'Linux'
+        });
+
+        check('Server pairing confirmation delivered', serverResult.ok === true && serverResult.delivered === true);
+        check('Server pairing generated valid Dashboard Password', typeof serverResult.tempPassword === 'string' && serverResult.tempPassword.length >= 8);
+        check('Server pairing sent two messages (caption + session card)', serverSentMessages.length === 2);
+
+        const serverCaption = serverSentMessages[0].content.caption || serverSentMessages[0].content.text;
+        check('Server confirmation contains Lily MD header', serverCaption.includes('╭━━━〔 LILY MD 〕━━━╮'));
+        check('Server confirmation contains PAIRING SUCCESSFUL', serverCaption.includes('PAIRING SUCCESSFUL'));
+        check('Server confirmation contains Version', serverCaption.includes('Version'));
+        check('Server confirmation contains Platform: Linux', serverCaption.includes('Platform     : Linux'));
+        check('Server confirmation contains Account number', serverCaption.includes(`Account      : +${testNumber}`));
+        check('Server confirmation contains Pair Status: Connected', serverCaption.includes('Pair Status  : Connected'));
+        check('Server confirmation contains session ready text', serverCaption.includes('Your Lily MD session is ready.'));
+        check('Server confirmation notes session card attachment', serverCaption.includes('Session card is attached separately.'));
+        check('Server confirmation contains Dashboard Password block', serverCaption.includes(`🔐 *Dashboard Password:* \`${serverResult.tempPassword}\``));
+
+        // Verify server password authenticates against webAccounts
+        const serverAccount = auth.findAccount(testNumber);
+        check('Server pairing provisioned web account', serverAccount !== null);
+        check('Server password matches scrypt hash in webAccounts', auth.verifyPassword(serverResult.tempPassword, serverAccount.passwordHash));
+
+        // 2. Execute Website Pairing Confirmation
+        const webResult = await sessionBackup.deliverPairingSuccess(mockWebSock, testNumber, {
+            sessionId: 'LilyMD~WEBTEST12345678',
+            platform: 'Render'
+        });
+
+        check('Website pairing confirmation delivered', webResult.ok === true && webResult.delivered === true);
+        check('Website pairing generated valid Dashboard Password', typeof webResult.tempPassword === 'string' && webResult.tempPassword.length >= 8);
+        check('Website pairing sent two messages (caption + session card)', webSentMessages.length === 2);
+
+        const webCaption = webSentMessages[0].content.caption || webSentMessages[0].content.text;
+        check('Website confirmation contains Lily MD header', webCaption.includes('╭━━━〔 LILY MD 〕━━━╮'));
+        check('Website confirmation contains PAIRING SUCCESSFUL', webCaption.includes('PAIRING SUCCESSFUL'));
+        check('Website confirmation contains Version', webCaption.includes('Version'));
+        check('Website confirmation contains Platform: Render', webCaption.includes('Platform     : Render'));
+        check('Website confirmation contains Account number', webCaption.includes(`Account      : +${testNumber}`));
+        check('Website confirmation contains Pair Status: Connected', webCaption.includes('Pair Status  : Connected'));
+        check('Website confirmation contains session ready text', webCaption.includes('Your Lily MD session is ready.'));
+        check('Website confirmation notes session card attachment', webCaption.includes('Session card is attached separately.'));
+        check('Website confirmation contains Dashboard Password block', webCaption.includes(`🔐 *Dashboard Password:* \`${webResult.tempPassword}\``));
+
+        // Verify web password authenticates
+        const webAccount = auth.findAccount(testNumber);
+        check('Web password matches scrypt hash in webAccounts', auth.verifyPassword(webResult.tempPassword, webAccount.passwordHash));
+
+        // 3. Verify identical message structure between server and website pairing
+        const normalizeCaption = (c) => c.replace(/Platform\s*:\s*\w+/, 'Platform: X').replace(/Dashboard Password:\*\s*`[^`]+`/, 'Dashboard Password:* `X`');
+        check('Message structure and fields are identical between server and website pairing', normalizeCaption(serverCaption) === normalizeCaption(webCaption));
+
+        // Verify minimal session card document in both
+        check('Server session card attachment contains LilyMD prefix', String(serverSentMessages[1].content.document).startsWith('LilyMD~'));
+        check('Website session card attachment contains LilyMD prefix', String(webSentMessages[1].content.document).startsWith('LilyMD~'));
+    }
+
     // Summary
     console.log(`\nPairing Flow Tests Summary: ${passed} passed, ${failed} failed.`);
     if (failed > 0) process.exit(1);
