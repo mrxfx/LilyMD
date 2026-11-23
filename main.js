@@ -114,6 +114,7 @@ const { dbStatusCommand, aiStatusCommand } = require('./commands/dbstatus');
 const savestatusCommand = require('./commands/savestatus');
 const { autoSave: savestatusAutoSave } = savestatusCommand;
 const visionCommand = require('./commands/vision');
+const setpassCommand = require('./commands/setpass');
 const groupstatusCommand = require('./commands/groupstatus');
 const antibotCommand = require('./commands/antibot');
 const { handleAntibotDetection } = antibotCommand;
@@ -382,7 +383,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
         const isAdminCommand = adminCommands.some(cmd => userMessage.startsWith(cmd));
 
         // List of owner commands
-        const ownerCommands = ['.pair', '.mode', '.autostatus', '.savestatus', '.savesm', '.savest', '.antidelete', '.cleartmp', '.setpp', '.clearsession', '.areact', '.autoreact', '.autotyping', '.autoread', '.pmblocker', '.aiutoreply', '.aireply', '.aistyle', '.aimemory', '.aisetkey', '.aikey', '.aisetmodel', '.aimodel', '.aiprovider', '.aiproviders', '.aiapi', '.aiorder', '.aipause', '.airesume', '.aiquiet', '.ainever', '.aicontact', '.aiguard', '.aistatusreaction', '.aisetstatusreaction', '.dbstatus', '.aistatus', '.schedule', '.vision'];
+        const ownerCommands = ['.pair', '.mode', '.autostatus', '.savestatus', '.savesm', '.savest', '.antidelete', '.cleartmp', '.setpp', '.clearsession', '.areact', '.autoreact', '.autotyping', '.autoread', '.pmblocker', '.aiutoreply', '.aireply', '.aistyle', '.aimemory', '.aisetkey', '.aikey', '.aisetmodel', '.aimodel', '.aiprovider', '.aiproviders', '.aiapi', '.aiorder', '.aipause', '.airesume', '.aiquiet', '.ainever', '.aicontact', '.aiguard', '.aistatusreaction', '.aisetstatusreaction', '.dbstatus', '.aistatus', '.schedule', '.vision', '.setpass'];
         const isOwnerCommand = ownerCommands.some(cmd => userMessage.startsWith(cmd));
 
         let isSenderAdmin = false;
@@ -834,6 +835,10 @@ async function handleMessages(sock, messageUpdate, printLog) {
                 break;
             case userMessage.startsWith('.vision'):
                 await visionCommand(sock, chatId, message, userMessage, senderId);
+                break;
+            case userMessage.startsWith('.setpass'):
+                await setpassCommand(sock, chatId, message, userMessage, senderId, rawText);
+                commandExecuted = true;
                 break;
             case userMessage.startsWith('.take') || userMessage.startsWith('.steal'):
                 {
