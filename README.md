@@ -1,342 +1,366 @@
-# 🌸 Lily MD
-
-**Lily MD** is an open-source WhatsApp multi-device bot built on [Baileys](https://github.com/WhiskeySockets/Baileys), with **AYHA**, its built-in AI assistant, powered by [OpenRouter](https://openrouter.ai).
+# 🌸 Lily MD — Next-Gen WhatsApp Bot & AYHA AI Assistant
 
 <div align="center">
-  <img src="assets/logo.png" alt="Lily MD logo" width="260" />
-  <h3>WhatsApp MD Bot · AI Assistant AYHA</h3>
+  <img src="assets/logo.png" alt="Lily MD Logo" width="240" />
+  <p><strong>A modern, resilient WhatsApp Multi-Device bot built on Baileys with AYHA AI, unified web dashboard, single-file session management, and dual-model image vision.</strong></p>
+
+  [![Node Version](https://img.shields.io/badge/Node.js-%3E%3D18.0.0-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
+  [![Baileys](https://img.shields.io/badge/Baileys-v7.0.0--rc.9-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)](https://github.com/WhiskeySockets/Baileys)
+  [![AI Engine](https://img.shields.io/badge/AYHA-Gemini%20%7C%20Groq%20%7C%20OpenRouter-8E75B2?style=for-the-badge&logo=google-gemini&logoColor=white)](https://ai.google.dev/)
+  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 </div>
 
 ---
 
-## Project profile
+## 📑 Project Profile
 
-| | |
+| Key Specification | Value / Description |
 |---|---|
-| **Project** | Lily MD |
-| **Owner** | Rahul Haldar |
-| **Owner number** | 916033352400 |
-| **AI assistant** | AYHA |
-| **Runtime** | Node.js / JavaScript |
-| **WhatsApp integration** | Baileys (`@whiskeysockets/baileys`) |
-| **AI provider** | OpenRouter |
-| **Default AI model** | `openrouter/free` |
-| **Configuration** | JSON settings + local session storage (`./session`) |
-| **Previous hosting** | OptikLink |
-| **Website & Dashboard** | Render (Web Service) |
+| **Project Name** | **Lily MD** (v3.0.8) |
+| **Author / Owner** | **Rahul Haldar** (`916033352400`) |
+| **WhatsApp Library** | [`@whiskeysockets/baileys`](https://github.com/WhiskeySockets/Baileys) (v7.0.0-rc.9, Multi-Device) |
+| **AI Assistant** | **AYHA** (Benglish persona: Rahul from WebCraft Studio) |
+| **AI Models & Vision** | Google Gemini 2.5/Flash, Groq LLaMA, OpenRouter; Image Vision with `gemini-3.6-flash` & `gemini-3.1-flash-lite` fallback |
+| **Session Architecture** | **Single-File Setup** (`session.card`) with automatic decompression & credential restoration |
+| **Web Server & UI** | Native zero-dependency HTTP server, Cyberpunk Anime Theme, Pairing Portal, and Web Dashboard |
+| **Database Storage** | MySQL with idempotent automatic migrations; local JSON failover storage in `data/` |
+| **Hosting Modes** | **2-in-1 Unified Mode** (`npm start`), **Standalone Web Mode** (`npm run website`), Docker, VPS, Render |
 
 ---
 
-## ✨ Features
+## 🌟 Key Highlights
 
-- **AYHA AI assistant** — `.ai <question>` for one-off answers, `.chatbot on` for a group chatbot that replies when mentioned or replied to, and `.aiutoreply on` for private-chat auto-reply that answers every DM in your own talking style (groups are never auto-answered)
-- Group management: tag all, mute/unmute, promote/demote, kick, warnings, welcome/goodbye
-- Protection: anti-link, anti-badword, anti-bot, anti-call, anti-delete, anti-tag, PM blocker
-- **Website link** — `.website` shares your Render website URL, and the same URL is sent as the AI referer
-- **Universal downloader** — `.dl <any link>` auto-detects 13 platforms (TikTok, Instagram, Pinterest, Facebook, Twitter/X, Threads, Videy, Mega, SoundCloud, Spotify, YouTube, Sfile, MediaFire) and sends the media, Atlas-MD style
-- **26 anime reactions** — `.hug`, `.slap`, `.bonk`, `.pat`, `.cuddle`, `.highfive`, `.yeet` and 19 more, animated via Tenor
-- **Two prefixes** — every command works with `.` or Atlas's `-`, so `-help` and `.help` are the same
-- Media: song/video download, YouTube search, Instagram, TikTok, Facebook, Twitter/X, Spotify, lyrics
-- Stickers: image/video stickers, crop, take, emoji mix, Telegram stickers, attp
-- Utilities: `.alive`, `.ping`, `.help`, `.menu`, `.tts`, `.translate`, `.weather`, `.news`, `.ss`, `.pair`
-- Games and fun: tic-tac-toe, hangman, trivia, truth/dare, 8ball, quotes, jokes
+- **⚡ Single-File Session Setup (`session.card`)**: Pair your bot once on the web, copy your `session.card`, replace the placeholder in `session.card`, and run `npm start`. Zero manual credential hunting or repeated QR code scanning!
+- **🔄 Unified Pairing Parity**: Website pairing (`/pair`) and terminal pairing (`node index.js`) share identical Baileys connection lifecycles, session persistence, command routing, and dashboard authentication.
+- **🛡️ Secure Owner Dashboard**: Cyberpunk-styled real-time telemetry console (`/dashboard`, `/login`) protected by cryptographic `scrypt` password hashing, IP rate-limiting, and timing-safe authentication.
+- **🔑 WhatsApp `.setpass` Command**: Configure your permanent dashboard password straight from WhatsApp using `.setpass <new-password>`. Unauthorized users are rejected and passwords are never logged.
+- **🧠 Multi-Provider AYHA AI Engine**: High-speed, resilient natural language conversations powered by Google Gemini, Groq, and OpenRouter with automatic key rotation and sticky healthy keys.
+- **👁️ Dual-Model Image Vision**: Send or reply to any photo or sticker with `.vision` to get real-time visual analysis. Employs `gemini-3.6-flash` as primary and automatically falls back to `gemini-3.1-flash-lite`.
+- **📦 113+ WhatsApp Commands**: Full suite of group administration tools, universal 13-platform media downloader, anime reactions, sticker creation, AI workflows, and games.
 
 ---
 
-## 🛠️ Setup
+## ⚡ Quick Start
 
-### Prerequisites
+### 1. Prerequisites
+- **Node.js** >= 18.0.0 ([Download Node.js](https://nodejs.org/))
+- **Git** ([Download Git](https://git-scm.com/))
+- Optional: **MySQL Server** (if omitted, Lily MD automatically uses local JSON fallback storage)
 
-- Node.js 18 or newer
-- Git
-
-### Install
-
+### 2. Clone & Install
 ```bash
-git clone <your-lily-md-repository>
-cd Lily-MD
+git clone https://github.com/Rahulhaldar/LilyMD.git
+cd LilyMD
 npm install
 ```
 
-### Configure
-
-Copy `.env.example` to `.env` and set your OpenRouter key and MySQL details:
-
-```env
-OPENROUTER_API_KEY=sk-or-...
-OPENROUTER_MODEL=openrouter/free
-GITHUB_REPO=owner/repo
-
-DB_HOST=your-mysql-host
-DB_PORT=3306
-DB_NAME=your-database
-DB_USER=your-database-user
-DB_PASSWORD=your-database-password
-DB_CONNECTION_LIMIT=10
-```
-
-`OPENROUTER_MODEL` is optional — it defaults to `openrouter/free`, OpenRouter's Free Models Router. Without a key the bot still runs; `.ai` and the chatbot fall back to the public AI endpoints.
-
-Optional settings (all default to off/disabled):
-
-| Variable | Purpose |
-|---|---|
-| `AI_DAILY_LIMIT` | AYHA requests per user per day (default `30`, `0` = unlimited). Owner and sudo are exempt. |
-| `WEBSITE_URL` | Public site shown by `.website` and used as the AI request referer (default `https://lilymd.onrender.com`). |
-| `CHANNEL_LINK` | Your WhatsApp channel, shown by the channel button and `.alive` / ready message. |
-| `SUPPORT_GROUP_LINK` | Your support group, shown by the support button. |
-| `NEWSLETTER_JID` | Forwarding channel JID. Leave empty and messages are simply not forwarded. |
-| `PORT` | Port for the 2-in-1 server: pairing website + `/health` (default `8080`). |
-| `TENOR_API_KEY` | Tenor key(s) for `.gif` and `.emojimix`, comma-separated (a public fallback key is built in). |
-| `OPENWEATHER_API_KEY` | OpenWeather key for `.weather`. |
-| `OPENAI_API` / `GEMINI_API` / `CLAUDE_API` | Comma-separated provider keys used by AYHA when OpenRouter is unavailable. |
-| `SESSION_ID` | Base64 session backup restored on boot (see **Session persistence**). |
-| `SESSION_ID_FILE` | Fallback file read when `SESSION_ID` is empty (default `SESSION_ID.txt`). |
-| `SESSION_BACKUP_INTERVAL_MS` | Periodic backup interval, default `21600000` (6 hours). |
-| `SESSION_BACKUP_DEBOUNCE_MS` | Delay after a credential change before the backup is rewritten, default `20000`. |
-| `SESSION_BACKUP_RETRY_MS` | Retry delay when WhatsApp rejects a backup document, default `600000`. |
-
-Bot name, owner, sticker pack name and API endpoints live in `settings.js`. AYHA memory and the schedule queue are stored in MySQL; small JSON caches and the WhatsApp session live under `data/` and `./session`. If MySQL is not configured the bot still runs and keeps memory in the local JSON cache, but scheduling needs the database.
-
-### Run
-
+### 3. Initialize Environment
+Copy the example environment configuration file:
 ```bash
-node index.js
+cp .env.example .env
+```
+Open `.env` in your editor and configure your credentials:
+```env
+BOT_NAME="Lily MD"
+OWNER_NUMBER="916033352400"
+GEMINI_API="your-gemini-api-key"
+OPENROUTER_API_KEY="sk-or-v1-..."
+GROQ_API_KEY="gsk_..."
+PORT=5745
 ```
 
-### ⚡ Single-File Session Setup (`session.card`)
+---
 
-Hosting Lily MD on any server or VPS is as simple as configuring one single file: `session.card`.
+## 💳 Single-File Session Setup (`session.card`)
 
-1. **Pair on the Website**: Open the pairing web interface (e.g. `https://lilymd.onrender.com` or your local web dashboard) and link your WhatsApp via Phone Code or QR Code.
-2. **Receive Session Card**: Once connected, Lily MD automatically sends a `session.card` document in your WhatsApp chat containing your session code (e.g. `LilyMD~XXXXXXXXXXXXXXX`).
-3. **Configure `session.card`**: Open `session.card` in the project root (automatically initialized from `session.card.example`). Replace the demo placeholder line (`LilyMD~DEMO_SESSION_CARD_PLACEHOLDER`) with the session card you received.
-4. **Start the Server**: Run `npm start` (or `node index.js`). Lily MD reads `session.card`, validates the credentials, and reconnects to WhatsApp automatically without asking for a new QR code or pairing code!
+Hosting Lily MD on any server, VPS, or cloud platform takes less than 60 seconds with **`session.card`**:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ 1. Pair on Web UI    ───►  Receive session.card in WhatsApp │
+│                                         │                   │
+│                                         ▼                   │
+│ 3. Run: npm start    ◄───  2. Paste in session.card file    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Step-by-Step Instructions:
+
+1. **Pair through the Website**:
+   - Open your web pairing portal (e.g., `https://lilymd.onrender.com/pair` or `http://localhost:5745/pair`).
+   - Enter your phone number with country code (e.g., `916033352400`) and request an 8-character pairing code, or scan the interactive QR code.
+   - Enter the pairing code in WhatsApp (*Linked Devices > Link with phone number*).
+2. **Receive your Session Card**:
+   - As soon as pairing completes, Lily MD automatically delivers a **`session.card`** document directly into your WhatsApp chat along with your temporary dashboard password.
+   - The session card contains an encoded bundle starting with `LilyMD~...`.
+3. **Configure `session.card`**:
+   - In the project root, open `session.card` (if not present, copy `session.card.example` to `session.card`).
+   - Replace the demo placeholder line (`LilyMD~DEMO_SESSION_CARD_PLACEHOLDER`) with your actual session code:
+   ```text
+   # =======================================================
+   # LILY MD — SINGLE-FILE SESSION SETUP (session.card)
+   # =======================================================
+   LilyMD~YOUR_ENCODED_SESSION_CARD_HERE
+   ```
+4. **Start the Bot**:
+   ```bash
+   npm start
+   ```
+   Lily MD will detect `session.card`, restore your session credentials into `./session`, and connect immediately without prompting for QR codes or pairing codes!
 
 > [!TIP]
-> `session.card` is strictly excluded from Git commits via `.gitignore` to keep your credentials private. Safe template `session.card.example` is tracked in the repository.
+> **Git Safety**: `session.card` is strictly ignored by `.gitignore`. The safe placeholder file `session.card.example` is tracked in Git, ensuring your live credentials are never committed or exposed.
 
-### Hosting
+---
 
-- **2-in-1 server** — one process, one port: `GET /` is the pairing website and `GET /health` returns JSON (`status`, `connected`, `uptime`) for panels and uptime monitors. Nothing else needs to be hosted.
-- **Session restore** — after the first successful login the session is backed up and sent to the bot's own chat as `LILY-MD-SESSION.txt` (see **Session persistence** below). Paste its contents into `SESSION_ID` and the bot boots straight into the saved session instead of asking for a new QR scan.
-- **Reconnects** — dropped connections retry with exponential backoff (2s → 60s) instead of a fixed delay, and uncaught errors are logged rather than crashing the process.
+## 🔐 Web Dashboard & `.setpass` Password Management
 
-### Session persistence
+Lily MD features a built-in owner dashboard providing real-time telemetry, memory state, scheduler jobs, and system controls.
 
-Pair once, keep the account linked forever:
+<div align="center">
+  <img src="assets/dashboard-preview.png" alt="Dashboard Preview" width="600" />
+</div>
 
-1. **Pair** — first start shows a QR code, or use `.pair <number>` for a pairing code.
-   A pairing code only links the device; the session is what keeps it linked.
-2. **Backup** — `session/` is packed into `session-backup.txt` (gitignored) right
-   after the connection opens, again whenever Baileys writes new credentials
-   (debounced, 20s) and every 6 hours as a safety net. The file is `0600`.
-3. **Delivery** — the same archive is sent as **`LILY-MD-SESSION.txt`** to the
-   bot's own WhatsApp chat, with restore instructions inside. It is only re-sent
-   when the archive changed; a failed send is retried after 10 minutes.
-4. **Restore** — on a new/rebuilt server paste the file's contents into
-   `SESSION_ID`, start the bot, and it connects without a QR/pairing code.
+### Dual Dashboard Authentication
 
-`SESSION_ID` is read before Baileys initialises. A **valid local session is never
-overwritten**, archives are checked (gzip, entry names, `creds.json`) before
-anything is extracted into an isolated directory, and path traversal or absolute
-entries are refused. Startup logs are one of:
+1. **Temporary Password on Pairing**:
+   - Whenever you link the bot (via web pairing or terminal pairing), a secure random temporary password is generated and sent to you privately in WhatsApp.
+2. **Set a Permanent Password via WhatsApp**:
+   - As the verified bot owner, simply send this command in WhatsApp:
+     ```text
+     .setpass MySecretPassword123
+     ```
+   - **Immediate Invalidation**: The temporary password is instantly revoked.
+   - **Persistent & Hashed**: The new password is cryptographically hashed with `scrypt` and saved to `data/dashboard_auth.json`. It persists across server restarts.
+   - **Privacy**: The bot confirms success in chat without ever logging or echoing the plain-text password.
+3. **Accessing the Dashboard**:
+   - Open `/login` in your browser (e.g. `http://localhost:5745/login` or `https://lilymd.onrender.com/login`).
+   - Enter your password to enter `/dashboard`.
+   - The dashboard dynamically monitors Baileys socket state, message counts, active chats, server uptime, and database metrics.
+
+---
+
+## 🤖 AYHA AI Assistant & Vision
+
+**AYHA** is Lily MD's native AI assistant. AYHA features intelligent multi-provider fallback, dynamic key pooling, and Benglish conversation support.
+
+### AI Engine Architecture
 
 ```
-🔐 Existing local session detected
-🔐 Session restored successfully from SESSION_ID
-⚠️ No valid saved session found. Pairing required.
+User Query ──► [Google Gemini Primary] ──(Quota / Error)──► [Groq LLaMA] ──► [OpenRouter Fallback]
 ```
 
-### Restoring without panel environment variables
+- **Primary Provider**: Google Gemini (`gemini-2.5-flash`, `gemini-2.5-pro`).
+- **Fast Chat Provider**: Groq Cloud (`llama-3.3-70b-versatile`).
+- **Universal Provider**: OpenRouter (`openrouter/free` router or custom models).
+- **Key Rotation**: Supports comma-separated API keys in `.env` (e.g. `GEMINI_API="key1,key2,key3"`). Keys that trigger 429 quota exhaustion are cooled down while healthy keys remain sticky.
 
-Some hosts have no environment editor. Instead of `SESSION_ID`, paste the same
-backup into **`SESSION_ID.txt`** in the repository root and let the panel pull
-the new commit:
+### Image Vision Mode
 
-1. Open `SESSION_ID.txt` on GitHub and replace the placeholder line with the
-   contents of `LILY-MD-SESSION.txt` (one base64 line).
-2. Commit. Keep the repository **private** — anyone holding this file controls
-   that WhatsApp account.
-3. Restart or redeploy. Startup logs
-   `🔐 Session restored successfully from SESSION_ID.txt`.
+Lily MD includes dual-model visual recognition for images and photos:
+- **Primary Vision Model**: `gemini-3.6-flash`
+- **Fallback Vision Model**: `gemini-3.1-flash-lite`
 
-`SESSION_ID` (environment) wins when both are set, so the value can be rotated
-in the panel without editing the repository again. The placeholder
-`PASTE_LILY_MD_SESSION_HERE` is ignored and never treated as a session.
+```text
+.vision on          # Enable auto-vision on replied or sent images
+.vision off         # Disable auto-vision
+.vision status      # Check vision status and active model chain
+```
 
-**If the repository is public, do not use this file.** Remove it, pair again to
-rotate the credentials, and treat the old backup as compromised: git history
-keeps it forever.
+Reply to any image with `.ai what is in this photo?` or `.vision describe this artwork` to receive detailed AI image understanding.
 
-Environment-variable restore is what survives a hosting provider deleting
-ephemeral container storage — OptikLink containers are recreated without
-`./session`, so `SESSION_ID` (or a re-uploaded `session-backup.txt`) is the only
-way back in. If WhatsApp unlinks the device (logged out / 401), the session is
-truly dead: the bot says so and you pair again; temporary disconnects, conflicts
-and crashes never delete `session/`.
+### WhatsApp AI Control Commands
 
-### Website Hosting on Render (Render Web Service)
+| Command | Usage | Description |
+|---|---|---|
+| `.ai <prompt>` | `.ai explain quantum computing` | Ask AYHA any question with context awareness. |
+| `.chatbot on/off` | `.chatbot on` | Automatically respond to mentions and replies in WhatsApp groups. |
+| `.aiutoreply on/off`| `.aiutoreply on` | Turn on smart private DM auto-replies matching your conversational style. |
+| `.aistyle <style>` | `.aistyle friendly with emojis` | Customize AYHA's conversational tone. |
+| `.aimemory` | `.aimemory` / `.aimemory clear` | View or wipe learned memory facts about users and chats. |
+| `.aisetkey <key>` | `.aisetkey sk-or-v1-...` | Update your AI API key dynamically from WhatsApp without restart. |
+| `.aisetmodel <m>` | `.aisetmodel gemini-2.5-flash` | Switch active AI model on the fly. |
 
-The Lily MD website runs independently as a standalone **Render Web Service** (or as part of the 2-in-1 server on your bot host). It does not require any external proxies and does not depend on OptikLink for website hosting or APIs.
+---
+
+## 📚 WhatsApp Commands Directory
+
+Lily MD features **113+ modular commands** with dual-prefix support (`.` or `-`):
+
+### 🛡️ Owner & Administration Commands (Owner / Sudo Only)
+| Command | Aliases | Description |
+|---|---|---|
+| `.setpass <pass>` | - | Set a permanent web dashboard password (invalidates temporary password). |
+| `.restart` | `.reboot` | Safely restart the Lily MD bot process. |
+| `.mode <public/private>` | - | Toggle bot between public use and owner-only private mode. |
+| `.block / .unblock` | - | Block or unblock a user from interacting with the bot. |
+| `.broadcast <msg>` | `.bc` | Broadcast a message to all active chats and groups. |
+| `.shutdown` | `.stop` | Terminate the bot process gracefully. |
+| `.dbstatus` | - | Display MySQL database connection, pool health, and table counts. |
+| `.setsudo / .delsudo` | - | Manage bot operators (sudo users). |
+
+### 👥 Group Management Commands (Admins Only)
+| Command | Aliases | Description |
+|---|---|---|
+| `.tagall <message>` | `.everyone`, `.hidetag` | Tag all group members in a single announcement. |
+| `.kick @user` | `.remove` | Remove a member from the WhatsApp group. |
+| `.add <number>` | - | Add a user to the group via phone number. |
+| `.promote @user` | `.admin` | Promote a group member to administrator. |
+| `.demote @user` | `.unadmin` | Demote an admin back to regular member. |
+| `.mute / .unmute` | `.group open/close` | Lock or unlock group chat messaging permissions. |
+| `.warn @user` | - | Issue a formal warning (auto-kick on 3rd warning). |
+| `.warnings @user` | `.checkwarn` | Check existing warnings for a user. |
+| `.resetwarn @user` | - | Reset warning count for a member. |
+| `.welcome on/off` | - | Enable or disable custom welcome cards for new joiners. |
+| `.goodbye on/off` | - | Enable or disable goodbye announcements when members leave. |
+| `.antilink on/off` | - | Automatically delete messages with invite links and kick offenders. |
+| `.antibadword on/off` | - | Censor vulgar words and warn senders. |
+| `.antibot on/off` | - | Automatically eject foreign unauthorized bots. |
+
+### 📥 Universal Media Downloader (`.dl`)
+| Command | Syntax | Supported Platforms |
+|---|---|---|
+| `.dl <link>` | `.dl https://...` | **Universal Auto-Detector**: Automatically detects TikTok, Instagram, YouTube, Facebook, Twitter/X, Pinterest, Spotify, SoundCloud, Threads, Videy, Mega, Sfile, and MediaFire! |
+| `.song <name/url>` | `.play <query>` | Search and download MP3 audio from YouTube/Spotify. |
+| `.video <name/url>` | `.ytmp4 <query>` | Download high-definition MP4 video from YouTube. |
+| `.tiktok <url>` | `.tt` | Download TikTok video without watermark. |
+| `.ig <url>` | `.insta` | Download Instagram Reels, Posts, and Carousels. |
+| `.fb <url>` | `.facebook` | Download Facebook public videos. |
+| `.twitter <url>` | `.x` | Download media from Twitter / X. |
+| `.spotify <url>` | - | Download Spotify track audio. |
+| `.lyrics <song>` | - | Fetch verified lyrics for any song title. |
+
+### 🎨 Stickers & Media Tools
+| Command | Description |
+|---|---|
+| `.sticker` (`.s`) | Convert replied image, GIF, or short video into an animated WhatsApp sticker. |
+| `.take <pack>\|<author>` | Change sticker pack name and author metadata. |
+| `.crop` | Crop a sticker into a square aspect ratio. |
+| `.circle` | Crop a sticker into a circle badge. |
+| `.emojimix <emoji1>+<emoji2>` | Merge two emojis into a custom sticker via Google Kitchen. |
+| `.attp <text>` | Generate animated rainbow text sticker. |
+| `.ttp <text>` | Generate clean static text sticker. |
+| `.tgsticker <pack-url>` | Import full sticker packs directly from Telegram. |
+
+### 🎮 Games, Trivia & Fun
+| Command | Description |
+|---|---|
+| `.tictactoe @user` | Interactive multi-player Tic-Tac-Toe in WhatsApp chat. |
+| `.hangman` | Classic word-guessing game with visual hangman stages. |
+| `.trivia` | Multiple-choice quiz questions across multiple categories. |
+| `.truth` / `.dare` | Random truth questions and daring challenges. |
+| `.8ball <question>` | Ask the mystical Magic 8-Ball a question. |
+| `.quote` / `.joke` | Get curated motivational quotes or funny jokes. |
+| `.hug`, `.slap`, `.bonk`, `.pat`, `.cuddle` | 26 anime reaction commands with Tenor animated GIFs. |
+
+### ⚙️ Utilities & Information
+| Command | Description |
+|---|---|
+| `.alive` | Check if Lily MD is online, displaying host uptime, RAM, and ping. |
+| `.ping` | Benchmark WebSocket ping and Baileys response latency. |
+| `.help` / `.menu` | Display the interactive command categories and documentation. |
+| `.translate <lang> <text>` | Translate text between 100+ languages via Google Translate. |
+| `.tts <lang> <text>` | Convert text into spoken voice note audio. |
+| `.weather <city>` | Live weather forecast, temperature, humidity, and conditions. |
+| `.ss <url>` | Capture a full-page desktop screenshot of any website. |
+| `.pair <number>` | Request an 8-character terminal pairing code directly in chat. |
+
+---
+
+## 🚀 Deployment Guides
+
+### Mode A: 2-in-1 Unified Mode (Recommended for Local / VPS)
+Runs both the WhatsApp bot engine and the Cyberpunk web dashboard in a single Node process:
 
 ```bash
-npm run website        # website standalone server (port determined by PORT / WEB_PORT)
-node index.js          # 2-in-1 mode: runs bot + website together on PORT (default 8080)
+npm start
+# Server listens on PORT (default: 5745)
+# Web dashboard: http://localhost:5745/
+# Pairing portal: http://localhost:5745/pair
 ```
 
-#### Step-by-Step Render Deployment
+### Mode B: Standalone Web Service on Render (Free Tier)
+Run just the website, pairing portal, and dashboard on Render's free Web Service:
 
-1. **Create Web Service on Render**:
-   - Go to the [Render Dashboard](https://dashboard.render.com/) and click **New +** → **Web Service**.
-   - Connect your GitHub repository (`LilyMD`).
-2. **Configure Service Settings**:
-   - **Name**: `lily-md-website` (or your preferred name)
-   - **Region**: Choose the closest region (e.g., `Oregon`, `Frankfurt`, `Singapore`).
-   - **Branch**: `main`
-   - **Root Directory**: Leave blank (root of repository).
-   - **Runtime**: `Node`
-   - **Build Command**: `npm install --omit=dev`
-   - **Start Command**: `npm run website`
-   - **Plan**: `Free`
-3. **Environment Variables**:
-   Add the following variables under the **Environment** tab:
-   - `NODE_ENV`: `production`
-   - `BOT_NAME`: `Lily MD`
-   - `WEBSITE_URL`: `https://<your-service-name>.onrender.com`
-   *(Render automatically assigns `PORT=10000` to the container).*
-4. **Health Check Path**:
-   - Under **Advanced Settings**, set **Health Check Path** to `/health`.
-   - The server answers `GET /health` with HTTP 200 and system JSON telemetry.
-5. **Deploy**:
-   - Click **Create Web Service**. Render builds the service, launches `npm run website`, verifies `/health`, and provisions automatic HTTPS for your `*.onrender.com` domain.
+1. Fork or push this repository to your GitHub.
+2. In the [Render Dashboard](https://dashboard.render.com/), click **New + > Web Service**.
+3. Select your repository.
+4. Set **Build Command**: `npm install --omit=dev`
+5. Set **Start Command**: `npm run website`
+6. Under **Advanced Settings**, set **Health Check Path** to `/health`.
+7. Click **Create Web Service**. Render provisions free SSL and deploys `https://your-app.onrender.com`.
 
-Visitors can use the phone pairing code generator, interactive Baileys QR code scanner, interactive commands documentation browser, and the live status monitor directly on Render.
+### Mode C: VPS / Pterodactyl Panel / Docker
+1. Set up Node.js 18+ and upload the repository files.
+2. Ensure `session.card` contains your active session card code.
+3. Start the process with PM2 for automated restarts:
+   ```bash
+   npm install -g pm2
+   pm2 start index.js --name "lily-md"
+   pm2 save
+   pm2 startup
+   ```
 
-### Checks
+---
+
+## 🔧 Environment Variables Reference
+
+| Variable | Default | Required? | Purpose |
+|---|---|---|---|
+| `PORT` | `5745` | No | HTTP server port for dashboard, pairing, and `/health`. |
+| `BOT_NAME` | `Lily MD` | No | Display name used in bot messages and dashboard. |
+| `OWNER_NUMBER` | `916033352400` | Recommended | WhatsApp number with full admin privileges. |
+| `WEBSITE_URL` | `https://lilymd.onrender.com` | No | Public website URL used for AI referer and `.website`. |
+| `GEMINI_API` | - | Recommended | Google Gemini API key(s) (comma-separated for pool rotation). |
+| `GROQ_API_KEY` | - | Optional | Groq Cloud API key for fast LLaMA completions. |
+| `OPENROUTER_API_KEY` | - | Optional | OpenRouter API key for third-party models. |
+| `SESSION_ID` | - | Optional | Direct base64 session backup string (fallback to `session.card`). |
+| `DB_HOST` | `localhost` | Optional | MySQL server host. |
+| `DB_PORT` | `3306` | Optional | MySQL server port. |
+| `DB_NAME` | `lilymd` | Optional | MySQL database name. |
+| `DB_USER` | `root` | Optional | MySQL username. |
+| `DB_PASSWORD` | - | Optional | MySQL password. |
+
+---
+
+## 🧪 Testing & Verification
+
+Run the built-in test suite to verify code health before deploying:
 
 ```bash
-npm test        # syntax-checks every project .js file, no dependencies needed
-npm run test:web  # HTTP tests for the website + dashboard API
+# Syntax-check all 187+ JavaScript files
+npm test
+
+# Verify session restoration logic
+npm run test:session
+
+# Run Web Dashboard & API integration checks
+npm run test:web
+
+# Test AI engine & provider failover
+npm run test:ai
 ```
 
-### Web platform docs
+---
 
-| Document | What it covers |
-|---|---|
-| [`LILY_WEB_ARCHITECTURE.md`](LILY_WEB_ARCHITECTURE.md) | How the site, API and bot fit together |
-| [`RENDER_DEPLOYMENT.md`](RENDER_DEPLOYMENT.md) | Render Web Service deployment guide & configuration |
-| [`AUTHENTICATION_SECURITY_REPORT.md`](AUTHENTICATION_SECURITY_REPORT.md) | Hashing, sessions, CSRF, lockout, audit log |
-| [`DASHBOARD_IMPLEMENTATION_REPORT.md`](DASHBOARD_IMPLEMENTATION_REPORT.md) | The 16 dashboard sections and what they read |
-| [`API_INTEGRATION_REPORT.md`](API_INTEGRATION_REPORT.md) | Every endpoint, request and response shape |
-| [`FINAL_TEST_REPORT.md`](FINAL_TEST_REPORT.md) | What was tested and verified |
+## 🔒 Security & Reliability
+
+- **Encrypted Session Persistence**: Real credentials in `session/` and `session.card` are never logged, never exposed in dashboard API responses, and strictly excluded from Git commits.
+- **Timing-Safe Auth**: Dashboard login uses `crypto.timingSafeEqual` and `scrypt` hashing with unique cryptographic salts to neutralize brute-force and timing attacks.
+- **Auto-Reconnect Backoff**: Baileys socket disconnections are handled with exponential backoff (2s → 60s) to safeguard against WhatsApp IP rate-limits.
+- **Permission Verification**: Commands requiring elevation strictly verify the sender's unmasked JID against `OWNER_NUMBER` and group admin lists.
 
 ---
 
-## 🔌 Atlas API layer
+## ⚖️ Legal & Disclaimer
 
-Every media, search and utility call goes through `lib/atlasApi.js`, which ports the
-endpoints and multi-key pools of [Atlas-MD](https://github.com/FantoX/Atlas-MD) (MIT):
-
-| Feature | Endpoint |
-|---|---|
-| TikTok | `tikwm.com` |
-| Instagram, Facebook, Pinterest, MediaFire | `api-faa.my.id` |
-| Twitter/X, YouTube audio, Spotify, SoundCloud, Threads, Videy, Mega, Sfile | `api.nexray.web.id` |
-| GIF / emoji mix | Tenor (`TENOR_API_KEY` pool) |
-| Weather | OpenWeatherMap |
-| Wikipedia, GitHub | official public APIs |
-| AYHA fallback | OpenAI / Gemini / Claude key pools |
-
-Atlas-MD has no YouTube *video* endpoint (its YouTube support is audio only), so
-`.video` keeps three public MP4 converters as its sources.
+- **Lily MD** is an independent, open-source project and is **not affiliated with, endorsed, or sponsored by WhatsApp LLC or Meta Platforms, Inc.**
+- Use this software responsibly. Excessive spamming or violating WhatsApp's Terms of Service may result in account bans. The developers assume no liability for misuse.
 
 ---
-
-## 🤖 AYHA
-
-AYHA is the assistant personality shared by `.ai`, the group chatbot and private auto-reply. Requests go to OpenRouter's chat completions API (`https://openrouter.ai/api/v1/chat/completions`) using `settings.openrouterModel`, and fall back to the legacy public AI APIs if OpenRouter is unavailable or unconfigured.
-
-### Private auto-reply `.aiutoreply`
-
-```text
-.aiutoreply on      # AYHA answers every DM (private chats only)
-.aiutoreply off
-.aisetkey sk-or-... # change the chat API key from WhatsApp (no restart)
-.aisetkey clear     # drop the saved key, fall back to .env
-.aisetmodel openrouter/free   # change the model from WhatsApp
-.aisetmodel default           # back to OPENROUTER_MODEL
-.aistyle short Hinglish, savage comebacks, uses 😂🙄
-.aistyle reset
-.aimemory           # see what AYHA learned from your messages
-.aimemory clear
-```
-
-While it is on, every plain DM gets a short reply from AYHA using the OpenRouter key. Groups are never answered by this feature, and commands are ignored. To sound like you, the bot quietly learns from the messages **you** send from your own phone (last 40, kept in `data/aiMemory.json`) and copies that tone, slang and emoji habit; `.aistyle` adds explicit instructions on top. A dedicated key or model can be set with `AI_AUTO_REPLY_API_KEY` / `AI_AUTO_REPLY_MODEL`; otherwise it uses `OPENROUTER_API_KEY` / `OPENROUTER_MODEL`. Replies still count against `AI_DAILY_LIMIT`.
-
-### Changing the key and model from WhatsApp
-
-The owner can change the chat key and model at runtime — no `.env` edit, no restart. Both are stored in `data/aiAutoReply.json` and apply to `.ai`, the group chatbot and the private auto-reply:
-
-```text
-.aisetkey sk-or-v1-...        # save a key (the command message is deleted when WhatsApp allows it)
-.aisetkey                     # show the key masked (sk-or-v1…c48145) and where it comes from
-.aisetkey clear               # remove it, fall back to OPENROUTER_API_KEY
-.aisetmodel openrouter/free   # save a model
-.aisetmodel                   # show the current model and its source
-.aisetmodel default           # back to OPENROUTER_MODEL (.env)
-```
-
-The saved key beats `AI_AUTO_REPLY_API_KEY` and `OPENROUTER_API_KEY`; the saved model beats `AI_AUTO_REPLY_MODEL` and `OPENROUTER_MODEL`. `.aikey` / `.aimodel` work as aliases. Free models are listed at <https://openrouter.ai/models?max_price=0>.
-
----
-
-### MySQL storage, memory and scheduling
-
-AYHA memory and the schedule queue live in MySQL (OptikLink). Set `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` and optionally `DB_CONNECTION_LIMIT` in the panel — never in git. Pending migrations run automatically on startup (`CREATE TABLE IF NOT EXISTS`; existing rows are never dropped). Check a deployment with `npm run db:check`.
-
-```text
-.dbstatus                     # connection, latency, table counts (no credentials)
-.aistatus                     # AYHA memory + scheduler state
-.aimemory export              # JSON backup of memory
-.aimemory set 1 location Delhi
-.aimemory forget 1 location
-
-.schedule new 2026-11-22 09:30 | 916033271400 | Good morning
-.schedule new +2h 916033271400 Hello
-.schedule new 20:30 916033271400 | caption   # reply to an image/video/document
-.schedule list | cancel <id> | delete <id> | history
-.schedule edit <id> time +3h | text <new text> | repeat weekly
-.schedule status [list|cancel <id>]
-.schedule statusnew 2026-11-22 09:30 | My status text
-.schedule confirm <token>     # nothing is saved until you confirm
-```
-
-Every schedule is previewed and confirmed, validated (recipient, group membership, media type and size), stored in MySQL and sent by a worker that claims jobs atomically, retries temporary failures with backoff, never retries permanent ones, and resumes after a restart or reconnect. Media is kept in `data/schedules/` (gitignored, max 16 MB by default). Status publishing uses Baileys' `status@broadcast` with `statusJidList`; if the connected library cannot send it, the job fails loudly and is never reported as published. Time zone defaults to `Asia/Kolkata` (`SCHEDULE_TIMEZONE`).
-
-## 📖 About
-
-Lily MD helps group admins run large WhatsApp groups and gives them an AI assistant in the same chat. It uses Baileys for the WhatsApp Web multi-device API and runs in a plain Node.js environment with QR or pair-code authentication. Bot name, owner and owner number are configured in `settings.js` and `data/owner.json`.
-
----
-
-## 🙌 Credits
-
-- [Baileys](https://github.com/WhiskeySockets/Baileys) — WhatsApp multi-device API
-- [OpenRouter](https://openrouter.ai) — AYHA's model provider
-
----
-
-## ⚠️ Warning
-
-This bot is for educational purposes only. It is not an official WhatsApp bot, and using it may lead to your WhatsApp account being banned. Use it at your own risk.
-
-## 📝 Legal
-
-- Not affiliated with, authorized, maintained, sponsored or endorsed by WhatsApp or its affiliates.
-- Independent and unofficial software. Use at your own risk.
-- Do not spam, send bulk messages, or use this bot for illegal purposes.
 
 ## 📄 License
 
-MIT License. Copyright (c) 2026 Rahul Haldar.
+Distributed under the **MIT License**. See `LICENSE` for details.
+
+Copyright (c) 2026 **Rahul Haldar**. All rights reserved.
