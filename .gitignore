@@ -3,6 +3,7 @@ node_modules/
 package-lock.json
 
 # Runtime data
+data/vision.json
 data/aiMemory.json
 data/aiAutoReply.json
 data/aiUsage.json

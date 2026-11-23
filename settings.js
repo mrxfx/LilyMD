@@ -22,7 +22,7 @@ try {
 const { ownerNumbers } = require('./lib/ownerNumbers');
 
 const configuredOwners = ownerNumbers();
-const primaryOwner = String(process.env.OWNER_NUMBER || '916033352400').replace(/\\D/g, '');
+const primaryOwner = String(process.env.OWNER_NUMBER || '916033352400').replace(/[^0-9]/g, '');
 const settings = {
   packname: 'Lily MD 🐱💗',
   author: 'Rahul Haldar',

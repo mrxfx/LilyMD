@@ -132,8 +132,18 @@
         if (!status) return;
         live.status = status;
         var pill = el('status-pill');
+        var text = el('status-text');
+
+        if (status.unreachable) {
+            pill.classList.remove('online');
+            pill.classList.add('warn');
+            text.textContent = 'Server unreachable';
+            return;
+        }
+
+        pill.classList.remove('warn');
         pill.classList.toggle('online', Boolean(status.connected));
-        el('status-text').textContent = status.connected
+        text.textContent = status.connected
             ? 'Online' + (status.whatsappNumber ? ' · ' + status.whatsappNumber : '')
             : 'Offline';
         var overview = document.querySelector('[data-live-status]');
@@ -142,27 +152,43 @@
         }
     }
 
+    function handleStatusError(err) {
+        var pill = el('status-pill');
+        var text = el('status-text');
+        // Do not mark the bot "Offline" merely because the dashboard cannot reach the status endpoint due to a configuration mismatch
+        pill.classList.remove('online');
+        pill.classList.add('warn');
+        text.textContent = 'Cannot reach server';
+    }
+
     function connectEvents() {
         if (stream) stream.close();
         try {
-            stream = new EventSource(LilyAPI.backend() + '/api/events', { withCredentials: true });
+            var token = null;
+            try { token = localStorage.getItem('lily.auth.token'); } catch (e) {}
+            var url = LilyAPI.backend() + '/api/events' + (token ? '?token=' + encodeURIComponent(token) : '');
+            stream = new EventSource(url, { withCredentials: true });
             stream.addEventListener('status', function (event) {
                 try { paintStatus(JSON.parse(event.data)); } catch (err) {}
             });
             stream.onerror = function () {
-                el('status-pill').classList.remove('online');
-                el('status-text').textContent = 'reconnecting…';
+                if (live.status && live.status.connected) {
+                    el('status-text').textContent = 'Online · reconnecting stream…';
+                }
             };
         } catch (err) {
-            // SSE unsupported — the Refresh button still works.
+            // Polling heartbeat handles it
         }
     }
 
     /* ------------------------------------------------------------- overview */
 
     function overviewCards(status) {
+        var botValue = status.unreachable ? 'Unreachable' : (status.connected ? 'Online' : 'Offline');
+        var botSub = status.unreachable ? 'check backend URL' : ('uptime ' + fmtUptime(status.uptimeSeconds));
+        var botCls = status.connected ? '' : (status.unreachable ? 'warn' : 'off');
         var cards = [
-            { label: 'Bot', value: status.connected ? 'Online' : 'Offline', sub: 'uptime ' + fmtUptime(status.uptimeSeconds), cls: status.connected ? '' : 'off' },
+            { label: 'Bot', value: botValue, sub: botSub, cls: botCls },
             { label: 'WhatsApp', value: status.whatsappNumber || (status.connected ? 'linked' : 'not linked'), sub: status.state },
             { label: 'Commands', value: String(status.enabledCommands) + ' / ' + status.commands, sub: 'enabled / total' },
             { label: 'Messages', value: String(status.messages), sub: 'counted by the bot' },
@@ -180,8 +206,14 @@
     var render = {};
 
     render.overview = async function () {
-        var status = await api('/api/dash/status');
-        paintStatus(status);
+        var status;
+        try {
+            status = await api('/api/dash/status');
+            paintStatus(status);
+        } catch (err) {
+            handleStatusError(err);
+            throw err;
+        }
         view().innerHTML =
             '<div class="stack">' +
             (me && me.mustChangePassword ? '<div class="banner warn">You are using a temporary password. Change it in <a href="#security">Security</a>.</div>' : '') +
@@ -284,6 +316,21 @@
                 '<button class="btn" data-action="test-ai">Send test</button>' +
                 '<div id="ai-result" style="margin-top:14px"></div></section>' +
             '</div>' +
+            '<section class="card"><h2>Image Vision</h2>' +
+              '<p class="hint">Analyzes incoming WhatsApp images using Google Gemini with dual-model failover.</p>' +
+              '<div class="toggle-row"><div class="meta"><strong>Image Vision (Dual-Model)</strong>' +
+                '<span>Status: <strong class="tag ' + (data.vision && data.vision.enabled ? 'on' : 'off') + '">' +
+                (data.vision && data.vision.enabled ? 'Active (ON)' : 'Inactive (OFF)') + '</strong></span></div>' +
+                '<label class="switch"><input type="checkbox" data-toggle="vision" data-key="vision"' +
+                (data.vision && data.vision.enabled ? ' checked' : '') + ' /><span class="track"></span></label></div>' +
+              '<table style="margin-top:14px"><tbody>' +
+                '<tr><th>Primary model</th><td class="mono">' + esc((data.vision && data.vision.primaryModel) || 'gemini-3.6-flash') + '</td></tr>' +
+                '<tr><th>Fallback model</th><td class="mono">' + esc((data.vision && data.vision.fallbackModel) || 'gemini-3.1-flash-lite') + '</td></tr>' +
+                '<tr><th>Failover mode</th><td>Automatic retry on rate limits (429), quota exhaustion, or temporary server errors</td></tr>' +
+                '<tr><th>WhatsApp commands</th><td class="mono">.vision on · .vision off · .vision status</td></tr>' +
+              '</tbody></table>' +
+              '<p class="hint" style="margin-top:12px">Settings are persisted across bot restarts. API keys are safely managed server-side and never exposed.</p>' +
+            '</section>' +
             '<section class="card"><h2>How AYHA learns you</h2><p class="hint">' +
               'The bot reads the plain messages you send from your own phone (never commands, never bots) and mirrors that tone. ' +
               'Style notes above are layered on top, and every chat has its own separate memory.</p>' +
@@ -700,6 +747,19 @@
             return;
         }
 
+        if (target.dataset.toggle === 'vision') {
+            var val = target.checked;
+            try {
+                await mutate('/api/dash/settings/toggle', { key: 'vision', value: val });
+                toast('Image Vision ' + (val ? 'enabled' : 'disabled'), 'success');
+                render.ai();
+            } catch (err) {
+                target.checked = !val;
+                fail(err);
+            }
+            return;
+        }
+
         if (target.dataset.toggle === 'setting') {
             var key = target.dataset.key;
             var value = target.checked;
@@ -1038,6 +1098,21 @@
         renderNav();
         await route();
         connectEvents();
+
+        // Heartbeat status poll every 8 seconds
+        setInterval(async function () {
+            try {
+                var s = await api('/api/dash/status', { timeoutMs: 6000 });
+                paintStatus(s);
+            } catch (err) {
+                if (err && err.status === 401) {
+                    location.href = '/login';
+                    return;
+                }
+                handleStatusError(err);
+            }
+        }, 8000);
+
         if (me.mustChangePassword) toast('You are using a temporary password — change it in Security.', 'error');
     })();
 })();

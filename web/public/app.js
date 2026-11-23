@@ -43,6 +43,11 @@
     async function api(path, options) {
         var opts = Object.assign({ credentials: 'include', headers: {} }, options || {});
         opts.headers = Object.assign({}, opts.headers);
+        var token = null;
+        try { token = localStorage.getItem('lily.auth.token'); } catch (e) {}
+        if (token && !opts.headers['authorization']) {
+            opts.headers['authorization'] = 'Bearer ' + token;
+        }
         var controller = new AbortController();
         var timeout = setTimeout(function () { controller.abort(); }, opts.timeoutMs || 25000);
         var res;
@@ -90,6 +95,12 @@
             failure.code = data.code;
             failure.data = data;
             throw failure;
+        }
+        if (data && data.token) {
+            try { localStorage.setItem('lily.auth.token', data.token); } catch (e) {}
+        }
+        if (path === '/api/auth/logout') {
+            try { localStorage.removeItem('lily.auth.token'); } catch (e) {}
         }
         return data;
     }

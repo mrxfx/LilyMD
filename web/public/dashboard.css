@@ -198,6 +198,8 @@
 .status-pill .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--danger); }
 .status-pill.online .dot { background: var(--ok); box-shadow: 0 0 0 3px rgba(143, 191, 166, .14); }
 .status-pill.online { color: var(--text-2); }
+.status-pill.warn .dot { background: #eab308; box-shadow: 0 0 0 3px rgba(234, 179, 8, .14); }
+.status-pill.warn { color: var(--text-2); }
 
 .content {
   padding: 26px 28px 72px;

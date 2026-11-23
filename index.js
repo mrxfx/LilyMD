@@ -96,6 +96,7 @@ let reconnectAttempts = 0
 let reconnectTimer = null
 let pairingCodeRequested = false
 let pendingFreshPairing = false
+let pendingPairingNumber = null
 let credsSavePromise = Promise.resolve()
 
 function sanitizeDisconnectReason(lastDisconnect) {
@@ -352,6 +353,7 @@ async function startXeonBotInc() {
 
         // Clean the phone number - remove any non-digit characters
         targetNumber = targetNumber.replace(/[^0-9]/g, '')
+        pendingPairingNumber = targetNumber
 
         // Validate the phone number using awesome-phonenumber
         const pn = require('awesome-phonenumber');
@@ -359,6 +361,7 @@ async function startXeonBotInc() {
             console.log(chalk.red('Invalid phone number. Please enter your full international number (e.g., 15551234567 for US, 447911123456 for UK, etc.) without + or spaces.'));
             pairingCodeRequested = false;
             pendingFreshPairing = false;
+            pendingPairingNumber = null;
             process.exit(1);
         }
 
@@ -404,7 +407,7 @@ async function startXeonBotInc() {
 
             try {
                 const { setMainSocket } = require('./lib/webApp');
-                if (typeof setMainSocket === 'function') setMainSocket(XeonBotInc);
+                if (typeof setMainSocket === 'function') setMainSocket(XeonBotInc, () => isConnected);
             } catch {}
 
             console.log(chalk.magenta(` `))
@@ -417,11 +420,19 @@ async function startXeonBotInc() {
             if (pendingFreshPairing) {
                 pendingFreshPairing = false;
                 try {
-                    const botNumber = XeonBotInc.user?.id ? XeonBotInc.user.id.split(':')[0].replace(/[^0-9]/g, '') : '';
-                    if (botNumber) {
-                        await sessionBackup.deliverPairingSuccess(XeonBotInc, botNumber, {
+                    const rawBotId = XeonBotInc.user?.id || XeonBotInc.authState?.creds?.me?.id || '';
+                    const decodedBot = rawBotId ? XeonBotInc.decodeJid(rawBotId).split('@')[0].split(':')[0].replace(/[^0-9]/g, '') : '';
+                    const targetToUse = pendingPairingNumber || decodedBot || String(owner[0] || settings.ownerNumber || '').replace(/[^0-9]/g, '');
+                    pendingPairingNumber = null;
+                    if (targetToUse) {
+                        const port = Number(process.env.PORT || process.env.SERVER_PORT || '5745');
+                        const delivery = await sessionBackup.deliverPairingSuccess(XeonBotInc, targetToUse, {
                             platform: process.env.PLATFORM || (process.platform === 'linux' ? 'Linux' : (process.platform === 'win32' ? 'Windows' : 'Server'))
                         });
+                        if (delivery && delivery.tempPassword) {
+                            console.log(chalk.black(chalk.bgGreen('\n🔐 Dashboard Password : ')), chalk.bold.white(delivery.tempPassword));
+                            console.log(chalk.cyan(`🌐 Dashboard URL        : http://localhost:${port}/login\n`));
+                        }
                     }
                 } catch (error) {
                     console.error('Error delivering pairing completion:', error.message);
@@ -443,6 +454,10 @@ async function startXeonBotInc() {
             isConnected = false
             if (currentSock === XeonBotInc) currentSock = null
             if (activeSock === XeonBotInc) activeSock = null
+            try {
+                const { setMainSocket } = require('./lib/webApp');
+                if (typeof setMainSocket === 'function') setMainSocket(null, () => false);
+            } catch {}
 
             const statusCode = lastDisconnect?.error?.output?.statusCode || lastDisconnect?.error?.statusCode
             const errMsg = String(lastDisconnect?.error?.message || lastDisconnect?.error || '')
