@@ -28,6 +28,7 @@ session/
 session.card
 session.card.*
 *.card
+!session.card.example
 session-backup.txt
 session-backup.txt.hash
 session.invalid-*/

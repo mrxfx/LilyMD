@@ -104,7 +104,17 @@ Bot name, owner, sticker pack name and API endpoints live in `settings.js`. AYHA
 node index.js
 ```
 
-Scan the QR code shown in the terminal with WhatsApp → Linked Devices, or generate a pair code with `.pair <number>` from the bot's own WhatsApp account.
+### ⚡ Single-File Session Setup (`session.card`)
+
+Hosting Lily MD on any server or VPS is as simple as configuring one single file: `session.card`.
+
+1. **Pair on the Website**: Open the pairing web interface (e.g. `https://lilymd.onrender.com` or your local web dashboard) and link your WhatsApp via Phone Code or QR Code.
+2. **Receive Session Card**: Once connected, Lily MD automatically sends a `session.card` document in your WhatsApp chat containing your session code (e.g. `LilyMD~XXXXXXXXXXXXXXX`).
+3. **Configure `session.card`**: Open `session.card` in the project root (automatically initialized from `session.card.example`). Replace the demo placeholder line (`LilyMD~DEMO_SESSION_CARD_PLACEHOLDER`) with the session card you received.
+4. **Start the Server**: Run `npm start` (or `node index.js`). Lily MD reads `session.card`, validates the credentials, and reconnects to WhatsApp automatically without asking for a new QR code or pairing code!
+
+> [!TIP]
+> `session.card` is strictly excluded from Git commits via `.gitignore` to keep your credentials private. Safe template `session.card.example` is tracked in the repository.
 
 ### Hosting
 
