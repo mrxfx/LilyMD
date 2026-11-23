@@ -191,8 +191,8 @@
 
     <form id="form" autocomplete="on">
       <div class="field-group">
-        <label class="field" for="number">WhatsApp number</label>
-        <input id="number" type="tel" inputmode="numeric" autocomplete="username" placeholder="916033352400" required />
+        <label class="field" for="number">WhatsApp number <span style="font-size:11px;opacity:0.75;font-weight:normal">(optional)</span></label>
+        <input id="number" type="tel" inputmode="numeric" autocomplete="username" placeholder="e.g. 919876543210 (or leave blank)" />
       </div>
       <div class="field-group" style="margin-bottom:0">
         <label class="field" for="password">Password</label>
@@ -241,7 +241,7 @@
     show($('error'), '');
     var number = $('number').value.replace(/[^0-9]/g, '');
     var password = $('password').value;
-    if (number.length < 7) { show($('error'), 'Enter your number with the country code.'); return; }
+    if (number && number.length < 7) { show($('error'), 'Enter your full number with country code, or leave blank.'); return; }
     if (!password) { show($('error'), 'Enter your password.'); return; }
     submit.disabled = true;
     submit.textContent = 'Signing in…';

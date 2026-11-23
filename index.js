@@ -97,6 +97,8 @@ let reconnectTimer = null
 let pairingCodeRequested = false
 let pendingFreshPairing = false
 let pendingPairingNumber = null
+let pendingPairingCustomCode = null
+let connectSessionResolvers = []
 let credsSavePromise = Promise.resolve()
 
 function sanitizeDisconnectReason(lastDisconnect) {
@@ -424,18 +426,30 @@ async function startXeonBotInc() {
                     const decodedBot = rawBotId ? XeonBotInc.decodeJid(rawBotId).split('@')[0].split(':')[0].replace(/[^0-9]/g, '') : '';
                     const targetToUse = pendingPairingNumber || decodedBot || String(owner[0] || settings.ownerNumber || '').replace(/[^0-9]/g, '');
                     pendingPairingNumber = null;
+                    const codeToUse = pendingPairingCustomCode;
+                    pendingPairingCustomCode = null;
                     if (targetToUse) {
                         const port = Number(process.env.PORT || process.env.SERVER_PORT || '5745');
                         const delivery = await sessionBackup.deliverPairingSuccess(XeonBotInc, targetToUse, {
+                            customCode: codeToUse,
                             platform: process.env.PLATFORM || (process.platform === 'linux' ? 'Linux' : (process.platform === 'win32' ? 'Windows' : 'Server'))
                         });
                         if (delivery && delivery.tempPassword) {
-                            console.log(chalk.black(chalk.bgGreen('\n🔐 Dashboard Password : ')), chalk.bold.white(delivery.tempPassword));
-                            console.log(chalk.cyan(`🌐 Dashboard URL        : http://localhost:${port}/login\n`));
+                            console.log(chalk.black(chalk.bgGreen('\n🔐 Dashboard Account  : ')), chalk.bold.white(`+${targetToUse}`));
+                            console.log(chalk.black(chalk.bgGreen('🔐 Dashboard Password : ')), chalk.bold.white(delivery.tempPassword));
+                            console.log(chalk.cyan(`🌐 Dashboard URL       : http://localhost:${port}/login\n`));
                         }
                     }
                 } catch (error) {
                     console.error('Error delivering pairing completion:', error.message);
+                }
+            }
+
+            if (connectSessionResolvers.length > 0) {
+                const resolvers = [...connectSessionResolvers];
+                connectSessionResolvers = [];
+                for (const r of resolvers) {
+                    try { r.resolve(XeonBotInc); } catch {}
                 }
             }
 
@@ -475,12 +489,26 @@ async function startXeonBotInc() {
                 // Another WhatsApp Web / bot instance took the session — do NOT wipe auth
                 console.log(chalk.yellow('⚠️ Session conflict: another device/instance connected.'))
                 console.log(chalk.yellow('   Stop other `node .` / WhatsApp Web linked sessions, then start the bot once.'))
+                if (connectSessionResolvers.length > 0) {
+                    const resolvers = [...connectSessionResolvers];
+                    connectSessionResolvers = [];
+                    for (const r of resolvers) {
+                        try { r.reject(new Error('Session conflict: device connection was replaced')); } catch {}
+                    }
+                }
                 return
             }
 
             if (isLoggedOut) {
                 pairingCodeRequested = false
                 pendingFreshPairing = false
+                if (connectSessionResolvers.length > 0) {
+                    const resolvers = [...connectSessionResolvers];
+                    connectSessionResolvers = [];
+                    for (const r of resolvers) {
+                        try { r.reject(new Error('WhatsApp logged out this session')); } catch {}
+                    }
+                }
                 try {
                     rmSync('./session', { recursive: true, force: true })
                     console.log(chalk.yellow('Session folder removed (WhatsApp unlinked this device).'))
@@ -570,13 +598,73 @@ startHealthServer(() => isConnected)
 // through these; it never touches session credentials.
 const webApi = require('./lib/webApi')
 webApi.setRuntime({
-    getConnected: () => isConnected,
+    getConnected: () => isConnected && Boolean(currentSock && (currentSock.ws?.isOpen || currentSock.ws?.readyState === 1 || currentSock.user)),
     getSocket: () => currentSock,
+    connectSession: async (options = {}) => {
+        return new Promise(async (resolve, reject) => {
+            const timeoutMs = 35000;
+            const timer = setTimeout(() => {
+                const idx = connectSessionResolvers.findIndex(r => r.resolve === resolve);
+                if (idx !== -1) connectSessionResolvers.splice(idx, 1);
+                if (isConnected && currentSock) {
+                    resolve(currentSock);
+                } else {
+                    reject(new Error('Bot connection timed out after pairing'));
+                }
+            }, timeoutMs);
+
+            connectSessionResolvers.push({
+                resolve: (sock) => {
+                    clearTimeout(timer);
+                    resolve(sock);
+                },
+                reject: (err) => {
+                    clearTimeout(timer);
+                    reject(err);
+                }
+            });
+
+            pendingFreshPairing = true;
+            if (options.number) pendingPairingNumber = String(options.number).replace(/[^0-9]/g, '');
+            if (options.customCode) pendingPairingCustomCode = options.customCode;
+
+            if (reconnectTimer) {
+                clearTimeout(reconnectTimer);
+                reconnectTimer = null;
+            }
+            reconnectAttempts = 0;
+
+            if (activeSock) {
+                try {
+                    activeSock.ev?.removeAllListeners('connection.update');
+                    activeSock.ev?.removeAllListeners('creds.update');
+                    activeSock.ws?.close();
+                    activeSock.end?.(undefined);
+                } catch {}
+                activeSock = null;
+            }
+            currentSock = null;
+            isConnected = false;
+
+            try {
+                await startXeonBotInc();
+            } catch (err) {
+                clearTimeout(timer);
+                const idx = connectSessionResolvers.findIndex(r => r.resolve === resolve);
+                if (idx !== -1) connectSessionResolvers.splice(idx, 1);
+                reject(err);
+            }
+        });
+    },
     disconnect: async () => {
         isConnected = false
         try { await currentSock?.logout() } catch (err) { console.error('[web] logout failed:', err.message) }
         try { rmSync('./session', { recursive: true, force: true }) } catch (err) { }
         currentSock = null
+        try {
+            const { setMainSocket } = require('./lib/webApp');
+            if (typeof setMainSocket === 'function') setMainSocket(null, () => false);
+        } catch {}
     },
     reconnect: async () => {
         try { currentSock?.end(undefined) } catch (err) { }
