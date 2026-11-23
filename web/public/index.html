@@ -129,6 +129,31 @@
     color: #ffffff;
     text-shadow: 0 0 14px rgba(192, 132, 252, .6);
     box-shadow: inset 0 2px 8px rgba(0, 0, 0, .8), 0 0 20px rgba(168, 85, 247, .2);
+    position: relative;
+    overflow: hidden;
+    animation: codeBoxPulse 3s ease-in-out infinite alternate;
+  }
+  @keyframes codeBoxPulse {
+    0% {
+      border-color: var(--line-strong);
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, .8), 0 0 20px rgba(168, 85, 247, .25);
+    }
+    100% {
+      border-color: var(--accent-magenta);
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, .8), 0 0 35px rgba(232, 121, 249, .45);
+    }
+  }
+  .code-box::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 0%, rgba(232, 121, 249, 0.08) 50%, transparent 100%);
+    animation: matrixScan 2.6s linear infinite;
+    pointer-events: none;
+  }
+  @keyframes matrixScan {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100%); }
   }
   .copy-code-btn {
     position: absolute;
@@ -217,6 +242,14 @@
 </head>
 <body>
 
+<!-- Ambient Anime Cyberpunk Animation Layer -->
+<div class="cyber-bg-glow" aria-hidden="true">
+  <div class="glow-orb glow-orb-1"></div>
+  <div class="glow-orb glow-orb-2"></div>
+  <div class="glow-orb glow-orb-3"></div>
+  <div class="cyber-grid-plane"></div>
+</div>
+
 <!-- SVG Icon Sprite (Proper scalable icons — zero emoji icons) -->
 <svg class="sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
   <symbol id="i-qr" viewBox="0 0 24 24"><path d="M3 3h6v6H3V3Zm2 2v2h2V5H5Zm8-2h6v6h-6V3Zm2 2v2h2V5h-2ZM3 15h6v6H3v-6Zm2 2v2h2v-2H5Zm10 0h2v2h-2v-2Zm2-2h2v2h-2v-2Zm-4 4h2v2h-2v-2Zm4 0h2v2h-2v-2Zm0-6h2v2h-2v-2Zm-4 2h2v2h-2v-2Zm-2-2h2v2h-2v-2Z"/></symbol>
@@ -267,6 +300,7 @@
         <div class="mascot-avatar-wrap">
           <img class="mascot-avatar" src="assets/logo.png" alt="Lily MD Mascot" />
           <div class="mascot-ring-glow"></div>
+          <div class="mascot-ring-glow-outer"></div>
         </div>
         <div>
           <span class="mascot-tag"><svg class="icon sm" aria-hidden="true"><use href="#i-cpu"/></svg>WhatsApp MD Bot</span>
