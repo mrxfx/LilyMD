@@ -1,0 +1,17 @@
+# ============================================================
+#  LILY MD — SINGLE-FILE SESSION SETUP (session.card)
+# ============================================================
+#
+#  How to set up your WhatsApp session:
+#  1. Pair your WhatsApp through the website:
+#     - Open https://lilymd.onrender.com (or your local web dashboard)
+#     - Pair via Phone Code or QR Code.
+#  2. You will receive a "session.card" in your WhatsApp chat.
+#  3. Open this file (session.card), copy that card code,
+#     and replace the demo placeholder line below.
+#  4. Save this file and start the bot: npm start
+#     (The bot connects automatically without asking for a new pairing code or QR!)
+#
+#  Format: LilyMD~XXXXXXXXXXXXXXX (or full base64 session archive)
+# ============================================================
+LilyMD~DEMO_SESSION_CARD_PLACEHOLDER
